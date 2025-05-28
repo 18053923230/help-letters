@@ -1,15 +1,16 @@
-import { View, Text } from '@tarojs/components'
+import { View } from '@tarojs/components'
 import { useLoad } from '@tarojs/taro'
+import ThreeScene from '../../components/ThreeScene'
 import './index.scss'
 
-export default function Index () {
+export default function Index() {
   useLoad(() => {
     console.log('Page loaded.')
   })
 
   return (
     <View className='index'>
-      <Text>拯救拼音</Text>
+      <ThreeScene />
     </View>
   )
 }
