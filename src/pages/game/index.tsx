@@ -49,32 +49,34 @@ const GamePage: React.FC = () => {
     initGame(category, key)
   })
 
-  const initGame = (category: string, key: string) => {
-    cleanup() // 先清理旧定时器
-    console.log('Initializing game:', { category, key })
-    const categoryData = phoneticData.find(c => c.id === category)
-    const item = categoryData?.items.find(i => i.key === key)
-    if (!item) {
-      console.error('Invalid item:', { category, key })
-      return
-    }
+const initGame = (category: string, key: string) => {
+  cleanup()
+  const categoryData = phoneticData.find(c => c.id === category)
+  const item = categoryData?.items.find(i => i.key === key)
+  if (!item) return
 
-    // 获取当前难度级别
-    const level = item.level || 1
-    console.log('Current level:', level)
-    const config = difficultyLevels[level - 1]
-    
-    setCurrentItem(item)
-    setGameConfig(config)
-    setHealth(config.initialHealth)
-    generateOptions(item, categoryData?.items || [], config.optionsCount)
-    
-    // 初始化音频上下文
-    audioContext.current = Taro.createInnerAudioContext()
-    audioContext.current.src = `/assets/audio/${category}/${item.audio}`
-    
-    startGame()
+  // 读取本地难度
+  const progress = Taro.getStorageSync('phonetic_progress')
+  let level = 1
+  if (progress) {
+    const parsed = typeof progress === 'string' ? JSON.parse(progress) : progress
+    level = parsed[`${category}_${key}_level`] || 1
   }
+  const config = difficultyLevels[level - 1]
+
+  setCurrentItem(item)
+  setGameConfig(config)
+  setHealth(config.initialHealth)
+  setGameState(prev => ({
+    ...prev,
+    currentLevel: level,
+    timeLeft: config.timeLimit
+  }))
+  generateOptions(item, categoryData?.items || [], config.optionsCount)
+  audioContext.current = Taro.createInnerAudioContext()
+  audioContext.current.src = `/assets/audio/${category}/${item.audio}`
+  startGame()
+}
 
   const generateOptions = (currentItem: PhoneticItem, allItems: PhoneticItem[], count: number) => {
     console.log('Generating options:', { currentItem, count })
@@ -161,23 +163,53 @@ const startGame = () => {
     }, 1000)
   }
 
-  const handleGameOver = (success: boolean) => {
-    console.log('Game over:', { success })
-    cleanup()
-    if (success) {
-      console.log('Game success!')
-      Taro.showToast({ title: '恭喜过关！', icon: 'success' })
-      setTimeout(() => {
-        Taro.navigateBack()
-      }, 1500)
-    } else {
-      console.log('Game failed!')
-      Taro.showToast({ title: '挑战失败', icon: 'error' })
-      setTimeout(() => {
-        Taro.navigateBack()
-      }, 1500)
+const handleGameOver = (success: boolean) => {
+  console.log('Game over:', { success })
+  cleanup()
+  if (success) {
+  const STORAGE_KEY = 'phonetic_progress'
+  const progress = Taro.getStorageSync(STORAGE_KEY) ? JSON.parse(Taro.getStorageSync(STORAGE_KEY)) : {}
+  const category = router.params.category
+  const key = router.params.key
+  const progressKey = `${category}_${key}`
+
+  // 读取当前难度
+  let currentLevel = progress[`${progressKey}_level`] || 1
+  let nextLevel = currentLevel + 1
+  let updated = false
+
+  if (nextLevel <= 10) {
+    progress[`${progressKey}_level`] = nextLevel
+    updated = true
+  } else {
+    // 解锁下一个
+    const categoryData = phoneticData.find(c => c.id === category)
+    if (categoryData) {
+      const idx = categoryData.items.findIndex(i => i.key === key)
+      if (idx !== -1 && idx + 1 < categoryData.items.length) {
+        const nextKey = categoryData.items[idx + 1].key
+        progress[`${category}_${nextKey}`] = true
+        updated = true
+      }
     }
   }
+
+  if (updated) {
+    Taro.setStorageSync(STORAGE_KEY, JSON.stringify(progress))
+    console.log('Progress updated:', progress)
+  }
+
+  Taro.showToast({ title: '恭喜过关！', icon: 'success' })
+  setTimeout(() => {
+    Taro.navigateBack()
+  }, 1500)
+}else {
+    Taro.showToast({ title: '挑战失败', icon: 'error' })
+    setTimeout(() => {
+      Taro.navigateBack()
+    }, 1500)
+  }
+}
 
     const handleDragStart = (option: string) => {
     console.log('Drag started:', option)
