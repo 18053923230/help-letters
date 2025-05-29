@@ -1,8 +1,8 @@
 .home-page {
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  
+  background: linear-gradient(135deg, #ffb300, #36cfc9, #f759ab, #52c41a, #1890ff);
+
   .background {
     position: fixed;
     top: 0;
@@ -10,7 +10,7 @@
     width: 100%;
     height: 100%;
     z-index: 1;
-    
+
     .game-canvas {
       width: 100%;
       height: 100%;
@@ -27,10 +27,10 @@
     box-sizing: border-box;
 
     .title {
-      font-size: 36px;
+      font-size: 66px;
       font-weight: bold;
       text-align: center;
-      color: #333;
+      // color: #333;
       margin-bottom: 40px;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
     }
@@ -46,18 +46,21 @@
         border-radius: 15px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         position: relative;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(.68, -0.55, .27, 1.55);
 
         &.active {
-          background: #e6f7ff;
-          border: 2px solid #1890ff;
-          transform: translateY(-2px);
+          background: #fffbe6 !important; // 让选中更亮
+          border: 3px solid #faad14 !important;
+          transform: scale(1.18) translateY(-6px);
+          font-weight: bold;
+          box-shadow: 0 6px 18px rgba(250, 173, 20, 0.18);
+          z-index: 2;
         }
 
         &.locked {
           opacity: 0.7;
           background: #f5f5f5;
-          
+
           .lock-icon {
             position: absolute;
             top: -10px;
@@ -118,6 +121,7 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
           }
+
           &.selected {
             border: 2px solid #1890ff;
             transform: translateY(-2px);
@@ -168,6 +172,7 @@
         transform: translateY(2px);
         box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
       }
+
       &.disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -183,34 +188,206 @@
   }
 
   .difficulty-level {
-  position: absolute;
-  top: 4px;
-  right: 8px;
-  background: #0cd749;
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    background: #0cd749;
+    color: #fff;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 33px;
+    font-weight: bold;
+    z-index: 2;
+  }
+
+  .item-content {
+    position: relative;
+  }
+
+  .stats-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 32px;
+    font-size: 32px;
+    font-weight: bold;
+    color: #ffb300;
+    margin-bottom: 16px;
+
+    .score {
+      color: #1890ff;
+    }
+  }
+}
+
+
+// 彩色方案
+$colorful-list: #ff4d4f, #ffb300, #36cfc9, #1890ff, #52c41a, #f759ab, #faad14, #722ed1, #13c2c2, #eb2f96;
+
+.item-content {
+  font-size: 40px;
+  font-weight: bold;
   color: #fff;
+  transition: color 0.3s, text-shadow 0.3s;
+
+  // 随机色
+  &.colorful-0 {
+    color: #ff4d4f;
+  }
+
+  &.colorful-1 {
+    color: #ffb300;
+  }
+
+  &.colorful-2 {
+    color: #36cfc9;
+  }
+
+  &.colorful-3 {
+    color: #1890ff;
+  }
+
+  &.colorful-4 {
+    color: #52c41a;
+  }
+
+  &.colorful-5 {
+    color: #f759ab;
+  }
+
+  &.colorful-6 {
+    color: #faad14;
+  }
+
+  &.colorful-7 {
+    color: #722ed1;
+  }
+
+  &.colorful-8 {
+    color: #13c2c2;
+  }
+
+  &.colorful-9 {
+    color: #eb2f96;
+  }
+}
+
+.item.selected .item-content,
+.item:active .item-content {
+  text-shadow: 0 0 16px #fff, 0 0 32px currentColor, 0 0 48px currentColor;
+  animation: glow 0.6s;
+}
+
+@keyframes glow {
+  0% {
+    text-shadow: 0 0 0px #fff;
+  }
+
+  50% {
+    text-shadow: 0 0 32px currentColor, 0 0 48px currentColor;
+  }
+
+  100% {
+    text-shadow: 0 0 0px #fff;
+  }
+}
+
+// 帮助按钮
+.help-btn {
+  position: absolute;
+  top: 32px;
+  right: 32px;
+  width: 54px;
+  height: 54px;
+  background: linear-gradient(135deg, #ffb300, #36cfc9, #f759ab);
+  color: #fff;
+  font-size: 38px;
+  font-weight: bold;
   border-radius: 50%;
-  width: 44px;
-  height: 44px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 33px;
-  font-weight: bold;
-  z-index: 2;
-}
-.item-content {
-  position: relative;
-}
-.stats-bar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 32px;
-  font-size: 32px;
-  font-weight: bold;
-  color: #ffb300;
-  margin-bottom: 16px;
-  .score {
-    color: #1890ff;
+  cursor: pointer;
+  z-index: 20;
+  transition: background 0.3s;
+
+  &:active {
+    background: linear-gradient(135deg, #faad14, #1890ff, #eb2f96);
   }
 }
+
+// 帮助弹窗
+.help-modal {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .help-content {
+    background: #fffbe6;
+    border-radius: 24px;
+    padding: 36px 32px 24px 32px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    min-width: 320px;
+    max-width: 90vw;
+
+    .help-title {
+      font-size: 48px;
+      font-weight: bold;
+      color: #faad14;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+
+    .help-text {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 24px;
+      line-height: 1.8;
+      text-align: left;
+    }
+
+    .help-close {
+      margin: 0 auto;
+      background: linear-gradient(90deg, #ffb300, #36cfc9, #f759ab);
+      color: #fff;
+      font-size: 22px;
+      font-weight: bold;
+      border-radius: 18px;
+      padding: 8px 32px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #faad14;
+      width: fit-content;
+    }
+  }
+}
+
+
+
+@for $i from 0 through 9 {
+  .colorful-bg-#{$i} {
+    background: nth($colorful-list, $i + 1) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    border: 3px solid lighten(nth($colorful-list, $i + 1), 20%);
+    transition: background 0.3s, border 0.3s;
+  }
+
+  .colorful-border-#{$i} {
+    border: 3px solid nth($colorful-list, $i + 1) !important;
+  }
+
+  .colorful-text-#{$i} {
+    color: nth($colorful-list, $i + 1) !important;
+  }
 }

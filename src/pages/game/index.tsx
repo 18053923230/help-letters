@@ -371,6 +371,8 @@ const GamePage: React.FC = () => {
         Taro.setStorageSync('user_stats', JSON.stringify({ coins: newCoins, score: newScore }))
     }
 
+    const audioPlayerRef = useRef<{ play: () => void }>(null)
+
 
     return (
         <View className="game-page">
@@ -390,34 +392,29 @@ const GamePage: React.FC = () => {
 
             <View className="circle-area">
                 <View className="current-letter">
-                    <View className="letter">{currentItem?.key}</View>
-                    <View className="level-indicator">{gameState.currentLevel}</View>
-
-                    {/* 环形血条SVG */}
-                    <svg className="circle-health" width="200" height="200">
-                        <circle
-                            cx="100"
-                            cy="100"
-                            r="90"
-                            stroke="#e0e0e0"
-                            strokeWidth="16"
-                            fill="none"
-                        />
-                        <circle
-                            cx="100"
-                            cy="100"
-                            r="90"
-                            stroke="#52c41a"
-                            strokeWidth="16"
-                            fill="none"
-                            strokeDasharray={2 * Math.PI * 90}
-                            strokeDashoffset={2 * Math.PI * 90 * (1 - health / 100)}
-                            style={{ transition: 'stroke-dashoffset 0.5s' }}
-                        />
-                    </svg>
-
-
-
+                  <svg className="circle-health" width="330" height="330">
+                    <circle
+                      cx="165"
+                      cy="165"
+                      r="150"
+                      stroke="#e0e0e0"
+                      strokeWidth="16"
+                      fill="none"
+                    />
+                    <circle
+                      cx="165"
+                      cy="165"
+                      r="150"
+                      stroke="#52c41a"
+                      strokeWidth="16"
+                      fill="none"
+                      strokeDasharray={2 * Math.PI * 150}
+                      strokeDashoffset={2 * Math.PI * 150 * (1 - health / 100)}
+                      style={{ transition: 'stroke-dashoffset 0.5s' }}
+                    />
+                  </svg>
+                  <View className="letter">{currentItem?.key}</View>
+                  <View className="level-indicator">{gameState.currentLevel}</View>
                 </View>
                 <View className="options-row">
                     {options.map((option, idx) => (

@@ -41,7 +41,9 @@ export const phoneticData: PhoneticCategory[] = [
       { key: 'r', audio: 'r.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 18 },
       { key: 'z', audio: 'z.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 19 },
       { key: 'c', audio: 'c.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 20 },
-      { key: 's', audio: 's.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 21 }
+      { key: 's', audio: 's.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 21 },
+      { key: 'y', audio: 'y.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 22 },
+      { key: 'w', audio: 'w.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 23 }
     ]
   },
   {
@@ -63,7 +65,16 @@ export const phoneticData: PhoneticCategory[] = [
       { key: 'iu', audio: 'iu.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 12 },
       { key: 'ie', audio: 'ie.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 13 },
       { key: 'üe', audio: 've.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 14 },
-      { key: 'er', audio: 'er.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 15 }
+      { key: 'er', audio: 'er.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 15 },
+      { key: 'an', audio: 'an.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 16 },
+      { key: 'en', audio: 'en.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 17 },
+      { key: 'in', audio: 'in.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 18 },
+      { key: 'un', audio: 'un.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 19 },
+      { key: 'ün', audio: 'vn.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 20 },
+      { key: 'ang', audio: 'ang.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 21 },
+      { key: 'eng', audio: 'eng.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 22 },
+      { key: 'ing', audio: 'ing.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 23 },
+      { key: 'ong', audio: 'ong.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 24 }
     ]
   },
   {
@@ -77,7 +88,18 @@ export const phoneticData: PhoneticCategory[] = [
       { key: 'ri', audio: 'ri.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 4 },
       { key: 'zi', audio: 'zi.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 5 },
       { key: 'ci', audio: 'ci.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 6 },
-      { key: 'si', audio: 'si.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 7 }
+      { key: 'si', audio: 'si.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 7 },
+      { key: 'yi', audio: 'yi.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 8 },
+      { key: 'wu', audio: 'wu.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 9 },
+      { key: 'yu', audio: 'yu.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 10 },
+      { key: 'ye', audio: 'ye.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 11 },
+      { key: 'yue', audio: 'yue.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 12 },
+      { key: 'yuan', audio: 'yuan.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 13 },
+      { key: 'yin', audio: 'yin.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 14 },
+      { key: 'yun', audio: 'yun.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 15 },
+      { key: 'ying', audio: 'ying.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 16 },
+      // { key: 'iong', audio: 'iong.mp3', isLocked: true, hasHardMode: true, isHardModeLocked: true, order: 17 }
+
     ]
   }
 ]

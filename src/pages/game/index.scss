@@ -55,7 +55,7 @@
     user-select: none;
   }
 
-   .circle-area {
+  .circle-area {
     position: relative;
     width: 420px;
     height: 420px;
@@ -64,9 +64,9 @@
       position: absolute;
       left: 50%;
       top: 120px;
-      width: 180px;
-      height: 180px;
-      margin-left: -90px;
+      width: 330px;
+      height: 330px;
+      margin-left: -165px; // 居中
       background: #fff;
       border-radius: 50%;
       box-shadow: 0 8px 24px rgba(0,0,0,0.18);
@@ -77,10 +77,29 @@
       font-weight: bold;
       color: #333;
       z-index: 2;
+      .circle-health {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 330px;
+        height: 330px;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .letter {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+        font-size: 110px;
+        font-weight: bold;
+        color: #333;
+      }
       .level-indicator {
         position: absolute;
-        top: -18px;
-        right: -18px;
+        top: 18px;
+        right: 18px;
         width: 48px;
         height: 48px;
         background: #1890ff;
@@ -92,12 +111,7 @@
         font-size: 24px;
         font-weight: bold;
         box-shadow: 0 2px 8px rgba(24,144,255,0.18);
-      }
-      .circle-health {
-        position: absolute;
-        left: -20px;
-        top: -20px;
-        z-index: 1;
+        z-index: 3;
       }
     }
     .options-row {
@@ -130,6 +144,11 @@
       }
     }
   }
+}
+
+.letter {
+  position: relative;
+  z-index: 2;
 }
 
 /* 漂浮动画关键帧 */

@@ -5,6 +5,9 @@ import { phoneticData } from '../../config/phoneticData'
 import { difficultyLevels } from '../../config/gameConfig'
 import './index.scss'
 
+import PhoneticAudioPlayer from '../../components/PhoneticAudioPlayer'
+// import { useRef } from 'react'
+
 const STORAGE_KEY = 'phonetic_progress'
 
 const HomePage: React.FC = () => {
@@ -12,6 +15,62 @@ const HomePage: React.FC = () => {
     const canvasRef = useRef<any>(null)
     const [progress, setProgress] = useState<{ [key: string]: boolean }>({})
     const [selectedItem, setSelectedItem] = useState<PhoneticItem | null>(null)
+
+    const [showHelp, setShowHelp] = useState(false)
+
+    // const audioPlayerRef = useRef<{ play: () => void }>(null)
+
+    // 在 HomePage 组件顶部
+    const [lastBonusTime, setLastBonusTime] = useState<number>(0)
+
+    useEffect(() => {
+        Taro.showToast({ title: '帮助右上？', icon: 'success' })
+
+        // 首次登录奖励
+        const saved = Taro.getStorageSync('user_stats')
+        if (!saved) {
+            setCoins(100)
+            setScore(0)
+            Taro.setStorageSync('user_stats', JSON.stringify({ coins: 100, score: 0 }))
+            Taro.showToast({ title: '首次登录奖励100金币！', icon: 'success' })
+        } else {
+            const { coins = 0, score = 0 } = JSON.parse(saved)
+            setCoins(coins)
+            setScore(score)
+        }
+
+        // 检查是否可以领取登录奖励
+        const now = Date.now()
+        const last = Number(Taro.getStorageSync('last_bonus_time') || 0)
+        if (now - last > 2 * 60 * 60 * 1000) { // 2小时
+            // 这里要用最新的 coins
+            const baseCoins = saved ? JSON.parse(saved).coins : 100
+            const baseScore = saved ? JSON.parse(saved).score : 0
+            const newCoins = baseCoins + 10
+            setCoins(newCoins)
+            Taro.setStorageSync('user_stats', JSON.stringify({ coins: newCoins, score: baseScore }))
+            Taro.setStorageSync('last_bonus_time', now)
+            setLastBonusTime(now)
+            Taro.showToast({ title: '获得登录奖励10金币！', icon: 'success' })
+        }
+    }, [])
+    // 进入关卡时扣除金币
+    const handleStartGame = () => {
+        if (!selectedItem) {
+            console.log('No item selected, returning')
+            return
+        }
+        if (coins < 5) {
+            Taro.showToast({ title: '金币不足，无法进入关卡，请节约用钱，2小时后再试', icon: 'none' })
+            return
+        }
+        const newCoins = coins - 5
+        setCoins(newCoins)
+        Taro.setStorageSync('user_stats', JSON.stringify({ coins: newCoins, score }))
+        Taro.navigateTo({
+            url: `/pages/game/index?category=${activeCategory}&key=${selectedItem.key}`
+        })
+    }
 
 
 
@@ -134,16 +193,7 @@ const HomePage: React.FC = () => {
 
 
 
-    const handleStartGame = () => {
-        console.log('Start game clicked, selected item:', selectedItem)
-        if (!selectedItem) {
-            console.log('No item selected, returning')
-            return
-        }
-        Taro.navigateTo({
-            url: `/pages/game/index?category=${activeCategory}&key=${selectedItem.key}`
-        })
-    }
+
 
     const getItemLevel = (category: string, key: string) => {
         const progress = Taro.getStorageSync(STORAGE_KEY)
@@ -171,10 +221,35 @@ const HomePage: React.FC = () => {
         setLastClick({ key: item.key, time: now })
         if (!progress[`${activeCategory}_${item.key}`]) return
         setSelectedItem(item)
+        audioPlayerRef.current?.play()
     }
+
+
+    const helpLines = [
+        '首次登录奖励100学习章。',
+        '每两小时可获赠10学习章，每次学习要消耗5学习章。',
+        '每次过关可获得关卡难度一致的学习章。',
+        '每关卡共10级难度。',
+        '可双击要学习的关卡进入，也可选中后点击开始。',
+        '积分是指成功通关的关卡次数。',
+        '进入关卡后，可看到当前难度的被保护的字母的血条，及任务时间，你需要在规定时间内将血条恢复到100分。',
+        '点击正确的音节时，将+10分，错误的将根据难度扣分。',
+        '目前数据没有同步到服务器，数据仅保存在本地。',
+    ]
+
+    const audioPlayerRef = useRef<{ play: () => void }>(null)
+
 
     return (
         <View className="home-page">
+
+
+
+            <PhoneticAudioPlayer
+                ref={audioPlayerRef}
+                src={`/assets/audio/${selectedItem?.audio || ''}`}
+                repeat={3}
+            />
             <View className="background">
                 <Canvas
                     type="2d"
@@ -184,14 +259,47 @@ const HomePage: React.FC = () => {
             </View>
 
             <View className="content">
-                <View className="title">拼音学习</View>
+
+                {/* const [showHelp, setShowHelp] = useState(false) */}
+
+                <View className="help-btn" onClick={() => setShowHelp(true)}>?</View>
+                {showHelp && (
+                    <View className="help-modal">
+                        <View className="help-content">
+                            <View className="help-title">帮助说明</View>
+                            <View className="help-text">
+                                {helpLines.map(line => <View key={line}>{line}</View>)}
+                            </View>
+
+                            <View className="help-close" onClick={() => setShowHelp(false)}>知道啦</View>
+                        </View>
+                    </View>
+                )}
+
+
+
+
+
+
+                <View className={`title colorful-text-${Math.floor(Math.random() * 10)}`}>守护拼音</View>
                 <View className="stats-bar">
-                    <View className="coin">金币：{coins}</View>
-                    <View className="score">积分：{score}</View>
+                    <View className="coin">学习章：{coins}</View>
+                    <View className="score">通关次数：{score}</View>
                 </View>
 
                 <View className="categories">
-                    {phoneticData.map(category => renderCategoryButton(category))}
+                    {phoneticData.map((category, idx) => {
+                        const colorIdx = Math.floor(Math.random() * 10)
+                        return (
+                            <View
+                                key={category.id}
+                                className={`category-button colorful-bg-${colorIdx} ${activeCategory === category.id ? 'active' : ''}`}
+                                onClick={() => setActiveCategory(category.id)}
+                            >
+                                <View className="category-name">{category.name}</View>
+                            </View>
+                        )
+                    })}
                 </View>
 
                 <View className="current-section">
@@ -200,20 +308,22 @@ const HomePage: React.FC = () => {
                     </View> */}
                     <View className="items-grid">
 
-                        {getVisibleItems(activeCategory).map(item => {
-                            const level = getItemLevel(activeCategory, item.key)
+                        {getVisibleItems(activeCategory).map((item, idx) => {
+                            // 让每次刷新都随机
+                            const colorIdx = Math.floor(Math.random() * 10)
+                            const level = getItemLevel(activeCategory, item.key) // 这里补上
                             return (
                                 <View
                                     key={item.key}
-                                    className={`item ${!progress[`${activeCategory}_${item.key}`] ? 'locked' : ''} ${selectedItem?.key === item.key ? 'selected' : ''}`}
+                                    className={`item colorful-bg-${colorIdx} ${!progress[`${activeCategory}_${item.key}`] ? 'locked' : ''} ${selectedItem?.key === item.key ? 'selected' : ''}`}
                                     onClick={() => handleItemClick(item)}
                                 >
-                                    <View className="item-content">
+                                    <View className={`item-content colorful-${colorIdx}`}>
                                         {item.key}
-
                                     </View>
-                                    {!progress[`${activeCategory}_${item.key}`] &&
-                                        <View className="lock-icon">🔒</View> || <View className="difficulty-level">{level}</View>
+                                    {!progress[`${activeCategory}_${item.key}`]
+                                        ? <View className="lock-icon">🔒</View>
+                                        : <View className="difficulty-level">{level}</View>
                                     }
                                 </View>
                             )
@@ -230,6 +340,9 @@ const HomePage: React.FC = () => {
             </View>
         </View>
     )
+
+
 }
+
 
 export default HomePage
