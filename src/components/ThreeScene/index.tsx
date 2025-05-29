@@ -244,10 +244,9 @@ const HomePage: React.FC = () => {
         <View className="home-page">
 
 
-
             <PhoneticAudioPlayer
                 ref={audioPlayerRef}
-                src={`/assets/audio/${selectedItem?.audio || ''}`}
+                src={selectedItem ? require(`../../assets/audio/${selectedItem.audio}`) : ''} // 注意require
                 repeat={3}
             />
             <View className="background">
@@ -335,7 +334,7 @@ const HomePage: React.FC = () => {
                     className={`start-button ${!selectedItem ? 'disabled' : ''}`}
                     onClick={handleStartGame}
                 >
-                    开始游戏
+                    开始学习
                 </View>
             </View>
         </View>

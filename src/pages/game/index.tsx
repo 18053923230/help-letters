@@ -376,6 +376,7 @@ const GamePage: React.FC = () => {
 
     return (
         <View className="game-page">
+            
             <View className="health-container">
                 <View className="health-bar">
                     <View
