@@ -5,6 +5,9 @@ import { difficultyLevels } from '../../config/gameConfig'
 import { phoneticData } from '../../config/phoneticData'
 import './index.scss'
 
+import PhoneticAudioPlayer from '../../components/PhoneticAudioPlayer'
+// import { useRef } from 'react'
+
 interface GameState {
     isPlaying: boolean;
     timeLeft: number;
@@ -25,7 +28,17 @@ const MOVE_RADIUS = (CIRCLE_SIZE - OPTION_SIZE) / 2 - 10
 
 
 const GamePage: React.FC = () => {
-    const router = useRouter()
+
+    
+    const audioPlayerRef = useRef<{ play: () => void }>(null)
+    const router = useRouter() // 先声明
+
+    const category = router.params.category
+    const key = router.params.key
+    const categoryData = phoneticData.find(c => c.id === category)
+    const item = categoryData?.items.find(i => i.key === key)
+    const audio = item?.audio // 例如 'b.mp3'
+
     const [health, setHealth] = useState(60)
     const [options, setOptions] = useState<string[]>([])
     const [currentItem, setCurrentItem] = useState<PhoneticItem | null>(null)
@@ -344,6 +357,10 @@ const GamePage: React.FC = () => {
 
     const handleOptionClick = (option: string, idx: number) => {
         // 计算主音节中心坐标和当前选项坐标
+        audioPlayerRef.current?.play()
+        // // ...原有动画和判定逻辑...
+        // const mainRect = document.querySelector('.current-letter')?.getBoundingClientRect()
+        // const optRect = document.querySelectorAll('.option-item')[idx]?.getBoundingClientRect()
         const mainRect = document.querySelector('.current-letter')?.getBoundingClientRect()
         const optRect = document.querySelectorAll('.option-item')[idx]?.getBoundingClientRect()
         if (mainRect && optRect) {
@@ -371,11 +388,20 @@ const GamePage: React.FC = () => {
         Taro.setStorageSync('user_stats', JSON.stringify({ coins: newCoins, score: newScore }))
     }
 
-    
+
 
 
     return (
         <View className="game-page">
+
+
+            <PhoneticAudioPlayer
+                ref={audioPlayerRef}
+                // src={audio ? require(`../../assets/audio/${category}/${audio}`) : ''}
+                   src={audio ? require(`../../assets/audio/${audio}`) : ''}
+                
+                repeat={1}
+            />
             <View className="health-container">
                 <View className="health-bar">
                     <View
@@ -392,29 +418,29 @@ const GamePage: React.FC = () => {
 
             <View className="circle-area">
                 <View className="current-letter">
-                  <svg className="circle-health" width="330" height="330">
-                    <circle
-                      cx="165"
-                      cy="165"
-                      r="150"
-                      stroke="#e0e0e0"
-                      strokeWidth="16"
-                      fill="none"
-                    />
-                    <circle
-                      cx="165"
-                      cy="165"
-                      r="150"
-                      stroke="#52c41a"
-                      strokeWidth="16"
-                      fill="none"
-                      strokeDasharray={2 * Math.PI * 150}
-                      strokeDashoffset={2 * Math.PI * 150 * (1 - health / 100)}
-                      style={{ transition: 'stroke-dashoffset 0.5s' }}
-                    />
-                  </svg>
-                  <View className="letter">{currentItem?.key}</View>
-                  <View className="level-indicator">{gameState.currentLevel}</View>
+                    <svg className="circle-health" width="330" height="330">
+                        <circle
+                            cx="165"
+                            cy="165"
+                            r="150"
+                            stroke="#e0e0e0"
+                            strokeWidth="16"
+                            fill="none"
+                        />
+                        <circle
+                            cx="165"
+                            cy="165"
+                            r="150"
+                            stroke="#52c41a"
+                            strokeWidth="16"
+                            fill="none"
+                            strokeDasharray={2 * Math.PI * 150}
+                            strokeDashoffset={2 * Math.PI * 150 * (1 - health / 100)}
+                            style={{ transition: 'stroke-dashoffset 0.5s' }}
+                        />
+                    </svg>
+                    <View className="letter">{currentItem?.key}</View>
+                    <View className="level-indicator">{gameState.currentLevel}</View>
                 </View>
                 <View className="options-row">
                     {options.map((option, idx) => (
