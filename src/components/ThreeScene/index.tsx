@@ -43,37 +43,26 @@ const HomePage: React.FC = () => {
     //         console.error('Failed to load progress:', error)
     //     }
     // }这是是解决第一个的方案。全部按顺序
-        const initProgress = () => {
-      try {
-        const savedProgress = getStorageSync(STORAGE_KEY)
-        if (savedProgress) {
-          setProgress(JSON.parse(savedProgress))
-        } else {
-          const initialProgress = {
-            'initials_b': true,
-            'finals_a': true,
-            'syllables_zhi': true
-          }
-          setStorageSync(STORAGE_KEY, JSON.stringify(initialProgress))
-          setProgress(initialProgress)
+    const initProgress = () => {
+        try {
+            const savedProgress = getStorageSync(STORAGE_KEY)
+            if (savedProgress) {
+                setProgress(JSON.parse(savedProgress))
+            } else {
+                const initialProgress = {
+                    'initials_b': true,
+                    'finals_a': true,
+                    'syllables_zhi': true
+                }
+                setStorageSync(STORAGE_KEY, JSON.stringify(initialProgress))
+                setProgress(initialProgress)
+            }
+        } catch (error) {
+            console.error('Failed to load progress:', error)
         }
-      } catch (error) {
-        console.error('Failed to load progress:', error)
-      }
     }
 
-    const handleItemClick = (item: PhoneticItem) => {
-        console.log('Item clicked:', item)
-        console.log('Current progress:', progress)
-        console.log('Is item unlocked?', progress[`${activeCategory}_${item.key}`])
-
-        if (!progress[`${activeCategory}_${item.key}`]) {
-            console.log('Item is locked, returning')
-            return
-        }
-        console.log('Setting selected item:', item)
-        setSelectedItem(item)
-    }
+    
 
     const cleanup = () => {
         // 清理资源
@@ -98,7 +87,7 @@ const HomePage: React.FC = () => {
     //         </View>
     //     )
     // }这是原来的顶部，要求按顺序解锁。
-        const renderCategoryButton = (category) => {
+    const renderCategoryButton = (category) => {
         return (
             <View
                 className={`category-button ${activeCategory === category.id ? 'active' : ''}`}
@@ -143,6 +132,25 @@ const HomePage: React.FC = () => {
         return 1
     }
 
+    const [lastClick, setLastClick] = useState<{ key: string, time: number } | null>(null)
+
+    const handleItemClick = (item: PhoneticItem) => {
+        const now = Date.now()
+        if (
+            lastClick &&
+            lastClick.key === item.key &&
+            now - lastClick.time < 400 // 400ms内双击
+        ) {
+            setSelectedItem(item)
+            handleStartGame()
+            setLastClick(null)
+            return
+        }
+        setLastClick({ key: item.key, time: now })
+        if (!progress[`${activeCategory}_${item.key}`]) return
+        setSelectedItem(item)
+    }
+
     return (
         <View className="home-page">
             <View className="background">
@@ -176,10 +184,10 @@ const HomePage: React.FC = () => {
                                 >
                                     <View className="item-content">
                                         {item.key}
-                                        
+
                                     </View>
                                     {!progress[`${activeCategory}_${item.key}`] &&
-                                        <View className="lock-icon">🔒</View>||<View className="difficulty-level">{level}</View>
+                                        <View className="lock-icon">🔒</View> || <View className="difficulty-level">{level}</View>
                                     }
                                 </View>
                             )
