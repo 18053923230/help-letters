@@ -221,7 +221,7 @@ const HomePage: React.FC = () => {
         setLastClick({ key: item.key, time: now })
         if (!progress[`${activeCategory}_${item.key}`]) return
         setSelectedItem(item)
-        audioPlayerRef.current?.play()
+        // audioPlayerRef.current?.play()
     }
 
 
@@ -238,6 +238,15 @@ const HomePage: React.FC = () => {
     ]
 
     const audioPlayerRef = useRef<{ play: () => void }>(null)
+        // 在 HomePage 组件内
+    useEffect(() => {
+      if (selectedItem) {
+        // 只有选中且已解锁才播放
+        if (progress[`${activeCategory}_${selectedItem.key}`]) {
+          audioPlayerRef.current?.play()
+        }
+      }
+    }, [selectedItem])
 
 
     return (

@@ -371,12 +371,11 @@ const GamePage: React.FC = () => {
         Taro.setStorageSync('user_stats', JSON.stringify({ coins: newCoins, score: newScore }))
     }
 
-    const audioPlayerRef = useRef<{ play: () => void }>(null)
+    
 
 
     return (
         <View className="game-page">
-            
             <View className="health-container">
                 <View className="health-bar">
                     <View
