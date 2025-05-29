@@ -75,7 +75,7 @@ const initGame = (category: string, key: string) => {
   generateOptions(item, categoryData?.items || [], config.optionsCount)
   audioContext.current = Taro.createInnerAudioContext()
   audioContext.current.src = `/assets/audio/${category}/${item.audio}`
-  startGame()
+  startGame(level, config.timeLimit) // 传递level和timeLimit
 }
 
   const generateOptions = (currentItem: PhoneticItem, allItems: PhoneticItem[], count: number) => {
@@ -89,13 +89,13 @@ const initGame = (category: string, key: string) => {
   }
 
 // 开始游戏
-const startGame = () => {
+const startGame = (level: number, timeLimit: number) => {
     console.log('Starting game with config:', gameConfig)
     setGameState(prev => ({
       ...prev,
       isPlaying: true,
-      timeLeft: gameConfig.timeLimit,
-      currentLevel: currentItem?.level || 1
+      timeLeft: timeLimit,
+      currentLevel: level
     }))
 
     // 开始血条下降
@@ -178,18 +178,18 @@ const handleGameOver = (success: boolean) => {
   let nextLevel = currentLevel + 1
   let updated = false
 
-  if (nextLevel <= 10) {
-    progress[`${progressKey}_level`] = nextLevel
-    updated = true
-  } else {
-    // 解锁下一个
+  // 1. 难度+1
+  progress[`${progressKey}_level`] = nextLevel
+  updated = true
+
+  // 2. 如果当前难度大于2，解锁下一个音节
+  if (nextLevel > 2) {
     const categoryData = phoneticData.find(c => c.id === category)
     if (categoryData) {
       const idx = categoryData.items.findIndex(i => i.key === key)
       if (idx !== -1 && idx + 1 < categoryData.items.length) {
         const nextKey = categoryData.items[idx + 1].key
         progress[`${category}_${nextKey}`] = true
-        updated = true
       }
     }
   }

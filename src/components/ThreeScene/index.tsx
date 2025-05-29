@@ -25,23 +25,41 @@ const HomePage: React.FC = () => {
         initProgress()
     })
 
-    const initProgress = () => {
-        try {
-            const savedProgress = getStorageSync(STORAGE_KEY)
-            if (savedProgress) {
-                console.log('Loading saved progress:', savedProgress)
-                setProgress(JSON.parse(savedProgress))
-            } else {
-                const initialProgress = {
-                    'initials_b': true
-                }
-                console.log('Creating initial progress:', initialProgress)
-                setStorageSync(STORAGE_KEY, JSON.stringify(initialProgress))
-                setProgress(initialProgress)
-            }
-        } catch (error) {
-            console.error('Failed to load progress:', error)
+    // const initProgress = () => {
+    //     try {
+    //         const savedProgress = getStorageSync(STORAGE_KEY)
+    //         if (savedProgress) {
+    //             console.log('Loading saved progress:', savedProgress)
+    //             setProgress(JSON.parse(savedProgress))
+    //         } else {
+    //             const initialProgress = {
+    //                 'initials_b': true
+    //             }
+    //             console.log('Creating initial progress:', initialProgress)
+    //             setStorageSync(STORAGE_KEY, JSON.stringify(initialProgress))
+    //             setProgress(initialProgress)
+    //         }
+    //     } catch (error) {
+    //         console.error('Failed to load progress:', error)
+    //     }
+    // }这是是解决第一个的方案。全部按顺序
+        const initProgress = () => {
+      try {
+        const savedProgress = getStorageSync(STORAGE_KEY)
+        if (savedProgress) {
+          setProgress(JSON.parse(savedProgress))
+        } else {
+          const initialProgress = {
+            'initials_b': true,
+            'finals_a': true,
+            'syllables_zhi': true
+          }
+          setStorageSync(STORAGE_KEY, JSON.stringify(initialProgress))
+          setProgress(initialProgress)
         }
+      } catch (error) {
+        console.error('Failed to load progress:', error)
+      }
     }
 
     const handleItemClick = (item: PhoneticItem) => {
@@ -69,14 +87,24 @@ const HomePage: React.FC = () => {
         }
     }
 
-    const renderCategoryButton = (category) => {
+    // const renderCategoryButton = (category) => {
+    //     return (
+    //         <View
+    //             className={`category-button ${category.isLocked ? 'locked' : ''} ${activeCategory === category.id ? 'active' : ''}`}
+    //             onClick={() => !category.isLocked && setActiveCategory(category.id)}
+    //         >
+    //             <View className="category-name">{category.name}</View>
+    //             {category.isLocked && <View className="lock-icon">🔒</View>}
+    //         </View>
+    //     )
+    // }这是原来的顶部，要求按顺序解锁。
+        const renderCategoryButton = (category) => {
         return (
             <View
-                className={`category-button ${category.isLocked ? 'locked' : ''} ${activeCategory === category.id ? 'active' : ''}`}
-                onClick={() => !category.isLocked && setActiveCategory(category.id)}
+                className={`category-button ${activeCategory === category.id ? 'active' : ''}`}
+                onClick={() => setActiveCategory(category.id)}
             >
                 <View className="category-name">{category.name}</View>
-                {category.isLocked && <View className="lock-icon">🔒</View>}
             </View>
         )
     }
@@ -133,9 +161,9 @@ const HomePage: React.FC = () => {
                 </View>
 
                 <View className="current-section">
-                    <View className="section-title">
+                    {/* <View className="section-title">
                         {phoneticData.find(c => c.id === activeCategory)?.name}
-                    </View>
+                    </View> */}
                     <View className="items-grid">
 
                         {getVisibleItems(activeCategory).map(item => {
@@ -148,10 +176,10 @@ const HomePage: React.FC = () => {
                                 >
                                     <View className="item-content">
                                         {item.key}
-                                        <View className="difficulty-level">{level}</View>
+                                        
                                     </View>
                                     {!progress[`${activeCategory}_${item.key}`] &&
-                                        <View className="lock-icon">🔒</View>
+                                        <View className="lock-icon">🔒</View>||<View className="difficulty-level">{level}</View>
                                     }
                                 </View>
                             )
