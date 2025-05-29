@@ -39,7 +39,7 @@ const GamePage: React.FC = () => {
     const healthDecayTimer = useRef<NodeJS.Timer | null>(null)
     const timeLeftTimer = useRef<NodeJS.Timer | null>(null)
     const audioContext = useRef<Taro.AudioContext | null>(null)
-        const [optionPositions, setOptionPositions] = useState<{ left: number, top: number }[]>([])
+    const [optionPositions, setOptionPositions] = useState<{ left: number, top: number }[]>([])
 
     // 生成一个不在中心圆的随机点
     function randomPosition() {
@@ -52,6 +52,19 @@ const GamePage: React.FC = () => {
     }
 
 
+    const [coins, setCoins] = useState(0)
+    const [score, setScore] = useState(0)
+
+    useEffect(() => {
+        const saved = Taro.getStorageSync('user_stats')
+        if (saved) {
+            const { coins = 0, score = 0 } = JSON.parse(saved)
+            setCoins(coins)
+            setScore(score)
+        }
+    }, [])
+
+
     // 每次 options 变化时，重新生成初始位置
     useEffect(() => {
         setOptionPositions(options.map(() => randomPosition()))
@@ -59,39 +72,39 @@ const GamePage: React.FC = () => {
 
 
     // 每个选项有一个目标点和当前点，缓慢移动到目标点
-const optionTargets = useRef<{ left: number, top: number }[]>([])
+    const optionTargets = useRef<{ left: number, top: number }[]>([])
 
-useEffect(() => {
-    // 初始化目标点
-    optionTargets.current = options.map(() => randomPosition())
+    useEffect(() => {
+        // 初始化目标点
+        optionTargets.current = options.map(() => randomPosition())
 
-    let rafId: number
-    let last = Date.now()
+        let rafId: number
+        let last = Date.now()
 
-    function animate() {
-        setOptionPositions(prev => prev.map((pos, idx) => {
-            const target = optionTargets.current[idx]
-            const dx = target.left - pos.left
-            const dy = target.top - pos.top
-            const dist = Math.sqrt(dx * dx + dy * dy)
-            if (dist < 2) {
-                optionTargets.current[idx] = randomPosition()
-                return pos
-            }
-            // 步长随难度提升，level 1时为1.2，level 10时为3
-            const minStep = 0.1
-            const maxStep = 3
-            const step = minStep + (maxStep - minStep) * ((gameConfig.level - 1) / 9)
-            return {
-                left: pos.left + dx / dist * step,
-                top: pos.top + dy / dist * step
-            }
-        }))
+        function animate() {
+            setOptionPositions(prev => prev.map((pos, idx) => {
+                const target = optionTargets.current[idx]
+                const dx = target.left - pos.left
+                const dy = target.top - pos.top
+                const dist = Math.sqrt(dx * dx + dy * dy)
+                if (dist < 2) {
+                    optionTargets.current[idx] = randomPosition()
+                    return pos
+                }
+                // 步长随难度提升，level 1时为1.2，level 10时为3
+                const minStep = 0.1
+                const maxStep = 2
+                const step = minStep + (maxStep - minStep) * ((gameConfig.level - 1) / 9)
+                return {
+                    left: pos.left + dx / dist * step,
+                    top: pos.top + dy / dist * step
+                }
+            }))
+            rafId = requestAnimationFrame(animate)
+        }
         rafId = requestAnimationFrame(animate)
-    }
-    rafId = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(rafId)
-}, [options.length])
+        return () => cancelAnimationFrame(rafId)
+    }, [options.length])
 
 
     // 清理定时器
@@ -248,6 +261,16 @@ useEffect(() => {
             progress[`${progressKey}_level`] = nextLevel
             updated = true
 
+            let newCoins = coins
+            let newScore = score
+            if (success) {
+                newCoins += gameState.currentLevel
+                newScore += 1
+            } else {
+                newScore = Math.max(0, newScore - 2)
+            }
+            saveStats(newCoins, newScore)
+
             // 2. 如果当前难度大于2，解锁下一个音节
             if (nextLevel > 2) {
                 const categoryData = phoneticData.find(c => c.id === category)
@@ -314,12 +337,39 @@ useEffect(() => {
         return cleanup
     }, [])
 
-    const handleOptionClick = (option: string) => {
-        console.log('Option clicked:', option)
-        handleDrop(option) // 复用原来的处理逻辑
+
+
+    const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
+    const [movingStyle, setMovingStyle] = useState<any>({})
+
+    const handleOptionClick = (option: string, idx: number) => {
+        // 计算主音节中心坐标和当前选项坐标
+        const mainRect = document.querySelector('.current-letter')?.getBoundingClientRect()
+        const optRect = document.querySelectorAll('.option-item')[idx]?.getBoundingClientRect()
+        if (mainRect && optRect) {
+            const dx = mainRect.left + mainRect.width / 2 - (optRect.left + optRect.width / 2)
+            const dy = mainRect.top + mainRect.height / 2 - (optRect.top + optRect.height / 2)
+            setSelectedIdx(idx)
+            setMovingStyle({
+                transform: `translate(${dx}px, ${dy}px) scale(0.7)`,
+                transition: 'transform 0.4s cubic-bezier(.68,-0.55,.27,1.55)'
+            })
+            setTimeout(() => {
+                setSelectedIdx(null)
+                setMovingStyle({})
+                handleDrop(option)
+            }, 400)
+        } else {
+            handleDrop(option)
+        }
     }
 
 
+    const saveStats = (newCoins: number, newScore: number) => {
+        setCoins(newCoins)
+        setScore(newScore)
+        Taro.setStorageSync('user_stats', JSON.stringify({ coins: newCoins, score: newScore }))
+    }
 
 
     return (
@@ -342,17 +392,40 @@ useEffect(() => {
                 <View className="current-letter">
                     <View className="letter">{currentItem?.key}</View>
                     <View className="level-indicator">{gameState.currentLevel}</View>
+
+                    {/* 环形血条SVG */}
+                    <svg className="circle-health" width="200" height="200">
+                        <circle
+                            cx="100"
+                            cy="100"
+                            r="90"
+                            stroke="#e0e0e0"
+                            strokeWidth="16"
+                            fill="none"
+                        />
+                        <circle
+                            cx="100"
+                            cy="100"
+                            r="90"
+                            stroke="#52c41a"
+                            strokeWidth="16"
+                            fill="none"
+                            strokeDasharray={2 * Math.PI * 90}
+                            strokeDashoffset={2 * Math.PI * 90 * (1 - health / 100)}
+                            style={{ transition: 'stroke-dashoffset 0.5s' }}
+                        />
+                    </svg>
+
+
+
                 </View>
-                <View className="options-container">
+                <View className="options-row">
                     {options.map((option, idx) => (
                         <View
                             key={option}
-                            className="option-item"
-                            style={{
-                                left: `${optionPositions[idx]?.left || 0}px`,
-                                top: `${optionPositions[idx]?.top || 0}px`
-                            }}
-                            onClick={() => handleOptionClick(option)}
+                            className={`option-item ${selectedIdx === idx ? 'moving' : ''}`}
+                            style={selectedIdx === idx ? movingStyle : {}}
+                            onClick={() => handleOptionClick(option, idx)}
                         >
                             {option}
                         </View>

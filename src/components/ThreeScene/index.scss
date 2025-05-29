@@ -201,4 +201,16 @@
 .item-content {
   position: relative;
 }
+.stats-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 32px;
+  font-size: 32px;
+  font-weight: bold;
+  color: #ffb300;
+  margin-bottom: 16px;
+  .score {
+    color: #1890ff;
+  }
+}
 }

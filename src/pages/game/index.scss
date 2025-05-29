@@ -55,27 +55,18 @@
     user-select: none;
   }
 
-  .circle-area {
+   .circle-area {
     position: relative;
     width: 420px;
     height: 420px;
     margin: 0 auto;
-    @media (max-width: 500px) {
-      width: 98vw;
-      height: 98vw;
-      min-width: 260px;
-      min-height: 260px;
-      max-width: 420px;
-      max-height: 420px;
-    }
     .current-letter {
       position: absolute;
       left: 50%;
-      top: 50%;
+      top: 120px;
       width: 180px;
       height: 180px;
       margin-left: -90px;
-      margin-top: -90px;
       background: #fff;
       border-radius: 50%;
       box-shadow: 0 8px 24px rgba(0,0,0,0.18);
@@ -102,13 +93,23 @@
         font-weight: bold;
         box-shadow: 0 2px 8px rgba(24,144,255,0.18);
       }
-    }
-    .options-container {
-      position: absolute;
-      left: 0; top: 0; width: 100%; height: 100%;
-      pointer-events: none;
-      .option-item {
+      .circle-health {
         position: absolute;
+        left: -20px;
+        top: -20px;
+        z-index: 1;
+      }
+    }
+    .options-row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      z-index: 3;
+      .option-item {
         width: 90px;
         height: 90px;
         background: #fff;
@@ -121,17 +122,11 @@
         font-weight: bold;
         color: #1890ff;
         cursor: pointer;
-        pointer-events: auto;
-        transition: box-shadow 0.2s, transform 0.2s, left 0.15s linear, top 0.15s linear;
         user-select: none;
-        &:active {
-          box-shadow: 0 2px 6px rgba(0,0,0,0.18);
-          transform: scale(0.92);
+        transition: transform 0.4s cubic-bezier(.68,-0.55,.27,1.55);
+        &.moving {
+          z-index: 10;
         }
-      }
-      // 漂浮动画
-      .float-anim {
-        animation: floatMove 3.5s ease-in-out infinite alternate;
       }
     }
   }
@@ -149,8 +144,8 @@
   .game-page {
     .health-container { max-width: 98vw; }
     .circle-area { width: 98vw; height: 98vw; }
-    .current-letter { font-size: 60px !important; width: 110px !important; height: 110px !important; }
-    .option-item { width: 54px !important; height: 54px !important; font-size: 28px !important; }
+    .current-letter { font-size: 150px !important; width:200px !important; height:200px !important; }
+    .option-item { width: 100px !important; height: 100px !important; font-size: 66px !important; }
     .timer-big { font-size: 34px !important; }
   }
 }

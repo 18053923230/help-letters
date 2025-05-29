@@ -14,6 +14,21 @@ const HomePage: React.FC = () => {
     const [selectedItem, setSelectedItem] = useState<PhoneticItem | null>(null)
 
 
+
+    const [coins, setCoins] = useState(0)
+    const [score, setScore] = useState(0)
+
+    useEffect(() => {
+        const saved = Taro.getStorageSync('user_stats')
+        if (saved) {
+            const { coins = 0, score = 0 } = JSON.parse(saved)
+            setCoins(coins)
+            setScore(score)
+        }
+    }, [])
+
+
+
     useEffect(() => {
         initCanvas()
         initProgress()
@@ -23,6 +38,13 @@ const HomePage: React.FC = () => {
     useDidShow(() => {
         // 返回时刷新进度
         initProgress()
+        // 返回时刷新金币和积分
+        const saved = Taro.getStorageSync('user_stats')
+        if (saved) {
+            const { coins = 0, score = 0 } = JSON.parse(saved)
+            setCoins(coins)
+            setScore(score)
+        }
     })
 
     // const initProgress = () => {
@@ -62,7 +84,7 @@ const HomePage: React.FC = () => {
         }
     }
 
-    
+
 
     const cleanup = () => {
         // 清理资源
@@ -163,6 +185,10 @@ const HomePage: React.FC = () => {
 
             <View className="content">
                 <View className="title">拼音学习</View>
+                <View className="stats-bar">
+                    <View className="coin">金币：{coins}</View>
+                    <View className="score">积分：{score}</View>
+                </View>
 
                 <View className="categories">
                     {phoneticData.map(category => renderCategoryButton(category))}
