@@ -1,4 +1,4 @@
-import { View } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useRouter } from '@tarojs/taro'
 import { useEffect, useState, useRef } from 'react'
 import { phoneticData } from '../../config/phoneticData'
@@ -89,7 +89,7 @@ const GamePage: React.FC = () => {
         const shuffled = wrongs.sort(() => Math.random() - 0.5)
         const selected = shuffled.slice(0, optionCount - 1)
         const lanes = Array.from({ length: LANE_COUNT }, (_, i) => i).sort(() => Math.random() - 0.5)
-    
+
         // 用最新的障碍物数组计算最小y
         let minY = 0
         if (currentObstacles.length > 0) {
@@ -97,7 +97,7 @@ const GamePage: React.FC = () => {
         }
         const emptyRows = 6
         const baseY = minY - (emptyRows + 1) * OBSTACLE_SIZE
-    
+
         // 生成空行
         const emptyGroups = []
         for (let i = emptyRows; i >= 1; i--) {
@@ -111,7 +111,7 @@ const GamePage: React.FC = () => {
                 }))
             )
         }
-    
+
         // 生成一组障碍物
         const obs = Array(LANE_COUNT).fill(0).map((_, i) => ({
             key: '',
@@ -136,7 +136,7 @@ const GamePage: React.FC = () => {
                 color: getRandomColor()
             }
         })
-    
+
         return [...emptyGroups.flat(), ...obs]
     }
     // 主循环
@@ -379,6 +379,8 @@ const GamePage: React.FC = () => {
 
     return (
         <View className="game-page" style={{ width: GAME_WIDTH, height: GAME_HEIGHT, margin: '0 auto', background: '#e6f7ff', position: 'relative', overflow: 'hidden' }}>
+
+
             <PhoneticAudioPlayer
                 ref={audioPlayerRef}
                 src={audio ? require(`../../assets/audio/${audio}`) : ''}
@@ -391,8 +393,45 @@ const GamePage: React.FC = () => {
                 </View>
                 <View className="health-text">{Math.round(health)}%</View>
             </View>
-            <View className="timer-big">{timeLeft}s</View>
-            <View className="score-bar">得分：{score} 金币：{coins}</View>
+                        {/* <View className="score-bar" style={{
+                margin: '12px auto 0 auto',
+                fontSize: 26,
+                color: '#faad14',
+                fontWeight: 'bold',
+                background: 'rgba(255,255,255,0.92)',
+                borderRadius: 16,
+                padding: '8px 28px',
+                boxShadow: '0 2px 8px #ffe58f',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: 320,
+                letterSpacing: 2,
+            }}>
+                <View style={{ display: 'flex', alignItems: 'center' }}>
+                    得分：<Text style={{ color: '#ff4d4f', fontSize: 28, fontWeight: 700, marginLeft: 4 }}>{score}</Text>
+                </View>
+                <View style={{ display: 'flex', alignItems: 'center' }}>
+                    金币：<Text style={{ color: '#52c41a', fontSize: 28, fontWeight: 700, marginLeft: 4 }}>{coins}</Text>
+                </View>
+            </View> */}
+            <View className="timer-big" style={{
+                margin: '10px auto 0 auto',
+                fontSize: 38,
+                fontWeight: 'bold',
+                color: '#ff4d4f',
+                textAlign: 'center',
+                letterSpacing: 4,
+                textShadow: '1px 1px 4px #fff, 0 2px 8px #ffbaba',
+                background: 'rgba(255,255,255,0.7)',
+                borderRadius: 12,
+                padding: '2px 24px',
+                display: 'inline-block',
+                minWidth: 80
+            }}>{timeLeft}s</View>
+
+
+
             {/* 跑道 */}
             <View className="runway" style={{ position: 'absolute', left: 0, top: 100, width: GAME_WIDTH, height: GAME_HEIGHT - 100 }}>
                 {/* 障碍物 */}
@@ -463,9 +502,11 @@ const GamePage: React.FC = () => {
                 <View className="ctrl-btn" onClick={handleRight} style={{
                     width: 60, height: 60, borderRadius: 30, background: '#faad14',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 36, color: '#fff', fontWeight: 'bold', boxShadow: '0 2px 8px #faad14'
+                    fontSize: 36, color: '#fff', fontWeight: 'bold', boxShadow: '0 2px 8px #faad14', marginRight: 20
                 }}>{'→'}</View>
             </View>
+
+
         </View>
     )
 }
