@@ -48,7 +48,7 @@ const GamePage: React.FC = () => {
         }
     }, [gameState.current.audio])
 
-    const obstacleSpeed = 4 + (level - 1) * 2 // 或直接用 gameConfig.obstacleSpeed
+    const obstacleSpeed = 10 + (level - 1) * 6// 或直接用 gameConfig.obstacleSpeed
 
     // 跑道分3条，0左1中2右
     const [runnerLane, setRunnerLane] = useState(1)
