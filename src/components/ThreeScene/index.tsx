@@ -67,6 +67,7 @@ const HomePage: React.FC = () => {
         const newCoins = coins - 5
         setCoins(newCoins)
         Taro.setStorageSync('user_stats', JSON.stringify({ coins: newCoins, score }))
+        console.log('[handleStartGame] 进入关卡扣除金币，剩余:', newCoins)
         Taro.navigateTo({
             url: `/pages/game/index?category=${activeCategory}&key=${selectedItem.key}`
         })
@@ -94,17 +95,7 @@ const HomePage: React.FC = () => {
         return () => cleanup()
     }, [])
 
-    useDidShow(() => {
-        // 返回时刷新进度
-        initProgress()
-        // 返回时刷新金币和积分
-        const saved = Taro.getStorageSync('user_stats')
-        if (saved) {
-            const { coins = 0, score = 0 } = JSON.parse(saved)
-            setCoins(coins)
-            setScore(score)
-        }
-    })
+
 
     // const initProgress = () => {
     //     try {
@@ -128,6 +119,7 @@ const HomePage: React.FC = () => {
         try {
             const savedProgress = getStorageSync(STORAGE_KEY)
             if (savedProgress) {
+
                 setProgress(JSON.parse(savedProgress))
             } else {
                 const initialProgress = {
@@ -247,6 +239,28 @@ const HomePage: React.FC = () => {
         }
       }
     }, [selectedItem])
+
+
+useDidShow(() => {
+    // 返回时刷新金币和积分
+    const saved = Taro.getStorageSync('user_stats')
+    console.log('[HomePage useDidShow] 读取 user_stats:', saved)
+    if (saved) {
+        const { coins = 0, score = 0 } = JSON.parse(saved)
+        setCoins(coins)
+        setScore(score)
+    }
+})
+
+useEffect(() => {
+    const saved = Taro.getStorageSync('user_stats')
+    console.log('[HomePage useEffect] 读取 user_stats:', saved)
+    if (saved) {
+        const { coins = 0, score = 0 } = JSON.parse(saved)
+        setCoins(coins)
+        setScore(score)
+    }
+}, [])
 
 
     return (

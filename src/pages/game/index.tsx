@@ -26,8 +26,29 @@ const GamePage: React.FC = () => {
     const categoryData = phoneticData.find(c => c.id === category)
     const item = categoryData && categoryData.items.find(i => i.key === key)
     const audio = item && item.audio
+    const timeLeftTimer = useRef<NodeJS.Timer | null>(null)
+    const healthDecayTimer = useRef<NodeJS.Timer | null>(null)
+    const audioContext = useRef<Taro.InnerAudioContext | null>(null)
+    const gameState = useRef({
+        currentLevel: level,
+        category: category,
+        key: key,
+        item: item,
+        audio: audio
+    })
 
-        const obstacleSpeed = 8 + (level - 1) * 2 // 或直接用 gameConfig.obstacleSpeed
+
+    useEffect(() => {
+        audioContext.current = Taro.createInnerAudioContext()
+        if (gameState.current.audio) {
+            audioContext.current.src = gameState.current.audio
+        }
+        return () => {
+            audioContext.current?.destroy()
+        }
+    }, [gameState.current.audio])
+
+    const obstacleSpeed = 8 + (level - 1) * 2 // 或直接用 gameConfig.obstacleSpeed
 
     // 跑道分3条，0左1中2右
     const [runnerLane, setRunnerLane] = useState(1)
@@ -58,7 +79,7 @@ const GamePage: React.FC = () => {
         ]
         return colors[Math.floor(Math.random() * colors.length)]
     }
-    
+
     // 生成一组障碍物（每次至少2个，且只有1个正确，初始y更高）
     const generateObstacles = () => {
         if (!categoryData || !item) return []
@@ -68,21 +89,43 @@ const GamePage: React.FC = () => {
         const shuffled = wrongs.sort(() => Math.random() - 0.5)
         const selected = shuffled.slice(0, optionCount - 1)
         const lanes = Array.from({ length: LANE_COUNT }, (_, i) => i).sort(() => Math.random() - 0.5)
-    
-        // 生成一组障碍物（1个正确+其余错误）
-        const startY = -OBSTACLE_SIZE
+
+        // 找到当前所有障碍物的最小y
+        let minY = 0
+        if (obstacles.length > 0) {
+            minY = Math.min(...obstacles.map(o => o.y))
+        }
+        const emptyRows = 6 // 你想要的空行数
+        // 新障碍物组的y
+        const baseY = minY - (emptyRows + 1) * OBSTACLE_SIZE
+
+        // 生成空行
+        const emptyGroups = []
+        for (let i = emptyRows; i >= 1; i--) {
+            emptyGroups.push(
+                Array(LANE_COUNT).fill(0).map((_, lane) => ({
+                    key: '',
+                    type: 'empty',
+                    lane,
+                    y: baseY + OBSTACLE_SIZE * (i - emptyRows - 1),
+                    color: 'transparent'
+                }))
+            )
+        }
+
+        // 生成一组障碍物
         const obs = Array(LANE_COUNT).fill(0).map((_, i) => ({
             key: '',
             type: 'empty',
             lane: i,
-            y: startY,
+            y: baseY,
             color: 'transparent'
         }))
         obs[lanes[0]] = {
             key: item.key,
             type: 'right',
             lane: lanes[0],
-            y: startY,
+            y: baseY,
             color: getRandomColor()
         }
         selected.forEach((opt, idx) => {
@@ -90,27 +133,11 @@ const GamePage: React.FC = () => {
                 key: opt.key,
                 type: 'wrong',
                 lane: lanes[idx + 1],
-                y: startY,
+                y: baseY,
                 color: getRandomColor()
             }
         })
-    
-        // 生成3行全空白（y依次递增）
-        const emptyRows = 30
-        const emptyGroups = []
-        for (let i = 1; i <= emptyRows; i++) {
-            emptyGroups.push(
-                Array(LANE_COUNT).fill(0).map((_, lane) => ({
-                    key: '',
-                    type: 'empty',
-                    lane,
-                    y: startY - i * OBSTACLE_SIZE * 1.2,
-                    color: 'transparent'
-                }))
-            )
-        }
-    
-        // 返回：先3行空白，再障碍物组
+
         return [...emptyGroups.flat(), ...obs]
     }
     // 主循环
@@ -150,10 +177,11 @@ const GamePage: React.FC = () => {
         if (!isPlaying) return
         obstacles.forEach(o => {
             if (
-                o.type !== 'empty' &&
-                o.y > GAME_HEIGHT - RUNNER_SIZE * 2 &&
-                o.lane === runnerLane
-            ){
+                (o.type === 'right' || o.type === 'wrong') &&
+                o.lane === runnerLane &&
+                o.y + OBSTACLE_SIZE > GAME_HEIGHT - RUNNER_SIZE * 4.2 && // runner的top
+                o.y < GAME_HEIGHT - RUNNER_SIZE * 4.2 + RUNNER_SIZE
+            ) {
                 // 碰撞
                 if (o.type === 'right') {
                     setScore(s => {
@@ -163,23 +191,28 @@ const GamePage: React.FC = () => {
                         }
                         return newScore
                     })
-                    setHealth(h => Math.min(100, h + 10))
-                    audioPlayerRef.current?.play() // 正确才发音
+                    setHealth(h => {
+                        const newHealth = Math.min(100, h + gameConfig.correctBonus)
+                        if (newHealth >= 100) {
+                            handleGameOver(true)
+                        }
+                        return newHealth
+                    })
+                    audioPlayerRef.current?.play()
                 } else {
                     setScore(s => Math.max(0, s - (gameConfig.wrongPenalty || 5)))
                     setHealth(h => {
-                        const newHealth = Math.max(0, h - 20)
+                        const newHealth = Math.max(0, h - gameConfig.healthDecay)
+                        console.log('Health updated:', newHealth)
                         if (newHealth <= 0) handleGameOver(false)
                         return newHealth
                     })
-                    // 播放错误音效
                     playWrongAudio()
                 }
                 setObstacles(prev => prev.filter(x => x !== o))
             }
         })
     }, [obstacles, runnerLane, isPlaying])
-
     // 开始游戏
     useDidShow(() => {
         setIsPlaying(true)
@@ -195,22 +228,68 @@ const GamePage: React.FC = () => {
     const handleRight = () => setRunnerLane(l => Math.min(LANE_COUNT - 1, l + 1))
 
     // 游戏结束
-    const handleGameOver = (success?: boolean) => {
-        setIsPlaying(false)
-        let newCoins = coins
-        let newScore = score
+    const handleGameOver = (success: boolean) => {
+        console.log('[handleGameOver] 游戏结束, success:', success)
+        cleanup()
         if (success) {
-            newCoins += level
-            newScore += 1
+            const STORAGE_KEY = 'phonetic_progress'
+            const progress = Taro.getStorageSync(STORAGE_KEY) ? JSON.parse(Taro.getStorageSync(STORAGE_KEY)) : {}
+            const category = router.params.category
+            const key = router.params.key
+            const progressKey = `${category}_${key}`
+
+            // 读取当前难度
+            let currentLevel = progress[`${progressKey}_level`] || 1
+            let nextLevel = currentLevel + 1
+            let updated = false
+
+            // 1. 难度+1
+            progress[`${progressKey}_level`] = nextLevel
+            updated = true
+
+            // 先读取本地
+            const saved = Taro.getStorageSync('user_stats')
+            let localCoins = 0
+            let localScore = 0
+            if (saved) {
+                const { coins: c = 0, score: s = 0 } = JSON.parse(saved)
+                localCoins = c
+                localScore = s
+            }
+            let newCoins = localCoins + currentLevel
+            let newScore = localScore + 1
+            console.log('[handleGameOver] 本地金币:', localCoins, '当前难度:', currentLevel, '加后:', newCoins)
+            saveStats(newCoins, newScore)
+
+            // 2. 如果当前难度大于2，解锁下一个音节
+            if (nextLevel > 2) {
+                const categoryData = phoneticData.find(c => c.id === category)
+                if (categoryData) {
+                    const idx = categoryData.items.findIndex(i => i.key === key)
+                    if (idx !== -1 && idx + 1 < categoryData.items.length) {
+                        const nextKey = categoryData.items[idx + 1].key
+                        progress[`${category}_${nextKey}`] = true
+                    }
+                }
+            }
+
+            if (updated) {
+                Taro.setStorageSync(STORAGE_KEY, JSON.stringify(progress))
+                console.log('Progress updated:', progress)
+            }
+
             Taro.showToast({ title: '恭喜过关！', icon: 'success' })
+            setTimeout(() => {
+                Taro.navigateBack()
+            }, 1500)
         } else {
-            newScore = Math.max(0, newScore - 2)
-            Taro.showToast({ title: '游戏结束', icon: 'none' })
+            let newScore = Math.max(0, score - 2)
+            saveStats(coins, newScore)
+            Taro.showToast({ title: '挑战失败', icon: 'error' })
+            setTimeout(() => {
+                Taro.navigateBack()
+            }, 1500)
         }
-        setCoins(newCoins)
-        setScore(newScore)
-        Taro.setStorageSync(STORAGE_KEY, JSON.stringify({ coins: newCoins, score: newScore }))
-        setTimeout(() => Taro.navigateBack(), 1500)
     }
 
     // 点击血条播放音频3次
@@ -235,6 +314,69 @@ const GamePage: React.FC = () => {
         audioCtx.onError(() => audioCtx.destroy())
     }
 
+    const saveStats = (newCoins: number, newScore: number) => {
+        console.log('[saveStats] 写入本地 user_stats:', { newCoins, newScore })
+        setCoins(newCoins)
+        setScore(newScore)
+        Taro.setStorageSync('user_stats', JSON.stringify({ coins: newCoins, score: newScore }))
+    }
+
+    // 清理定时器
+    const cleanup = () => {
+        if (healthDecayTimer.current) {
+            clearInterval(healthDecayTimer.current)
+            healthDecayTimer.current = null
+        }
+        if (timeLeftTimer.current) {
+            clearInterval(timeLeftTimer.current)
+            timeLeftTimer.current = null
+        }
+        if (audioContext.current) {
+            audioContext.current.destroy()
+            audioContext.current = null
+        }
+    }
+    const startHealthDecay = () => {
+        if (healthDecayTimer.current) {
+            clearInterval(healthDecayTimer.current)
+        }
+
+        console.log('Starting health decay...')
+        healthDecayTimer.current = setInterval(() => {
+            setHealth(prev => {
+                const newHealth = Math.max(0, prev - gameConfig.healthDecay)
+                console.log('Health updated:', newHealth)
+                if (newHealth >= 100) {
+                    handleGameOver(true) // 满分成功
+                } else if (newHealth <= 0) {
+                    handleGameOver(false) // 血量耗尽失败
+                }
+                return newHealth
+            })
+        }, 1000)
+    }
+
+    const startCountdown = () => {
+        if (timeLeftTimer.current) {
+            clearInterval(timeLeftTimer.current)
+        }
+
+        console.log('Starting countdown...')
+        setGameState(prev => ({ ...prev, timeLeft: gameConfig.timeLimit }))
+
+        timeLeftTimer.current = setInterval(() => {
+            setGameState(prev => {
+                const newTime = prev.timeLeft - 1
+                console.log('Time left:', newTime)
+                if (newTime <= 0) {
+                    handleGameOver(false)
+                }
+                return { ...prev, timeLeft: newTime }
+            })
+        }, 1000)
+    }
+
+
     return (
         <View className="game-page" style={{ width: GAME_WIDTH, height: GAME_HEIGHT, margin: '0 auto', background: '#e6f7ff', position: 'relative', overflow: 'hidden' }}>
             <PhoneticAudioPlayer
@@ -254,7 +396,7 @@ const GamePage: React.FC = () => {
             {/* 跑道 */}
             <View className="runway" style={{ position: 'absolute', left: 0, top: 100, width: GAME_WIDTH, height: GAME_HEIGHT - 100 }}>
                 {/* 障碍物 */}
-                            {obstacles.filter(o => o.type !== 'empty').map((o, idx) => (
+                {obstacles.filter(o => o.type !== 'empty').map((o, idx) => (
                     <View
                         key={idx}
                         className="obstacle"
@@ -279,7 +421,7 @@ const GamePage: React.FC = () => {
                     </View>
                 ))}
                 {/* 主角 */}
-                              <View
+                <View
                     className="runner"
                     style={{
                         position: 'absolute',
@@ -303,9 +445,26 @@ const GamePage: React.FC = () => {
                 </View>
             </View>
             {/* 左右按钮 */}
-            <View className="control-bar" style={{ position: 'absolute', bottom: 20, left: 0, width: '100%', display: 'flex', justifyContent: 'center', gap: 40 }}>
-                <View className="ctrl-btn" onClick={handleLeft} style={{ width: 60, height: 60, borderRadius: 30, background: '#faad14', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#fff', fontWeight: 'bold', boxShadow: '0 2px 8px #faad14' }}>{'←'}</View>
-                <View className="ctrl-btn" onClick={handleRight} style={{ width: 60, height: 60, borderRadius: 30, background: '#faad14', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#fff', fontWeight: 'bold', boxShadow: '0 2px 8px #faad14' }}>{'→'}</View>
+            <View className="control-bar" style={{
+                position: 'absolute',
+                bottom: 40,
+                left: 0,
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'space-between',
+                pointerEvents: 'auto',
+                padding: '0 10px',
+            }}>
+                <View className="ctrl-btn" onClick={handleLeft} style={{
+                    width: 60, height: 60, borderRadius: 30, background: '#faad14',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 36, color: '#fff', fontWeight: 'bold', boxShadow: '0 2px 8px #faad14'
+                }}>{'←'}</View>
+                <View className="ctrl-btn" onClick={handleRight} style={{
+                    width: 60, height: 60, borderRadius: 30, background: '#faad14',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 36, color: '#fff', fontWeight: 'bold', boxShadow: '0 2px 8px #faad14'
+                }}>{'→'}</View>
             </View>
         </View>
     )
