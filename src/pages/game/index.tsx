@@ -48,7 +48,7 @@ const GamePage: React.FC = () => {
         }
     }, [gameState.current.audio])
 
-    const obstacleSpeed = 8 + (level - 1) * 2 // 或直接用 gameConfig.obstacleSpeed
+    const obstacleSpeed = 4 + (level - 1) * 2 // 或直接用 gameConfig.obstacleSpeed
 
     // 跑道分3条，0左1中2右
     const [runnerLane, setRunnerLane] = useState(1)
@@ -81,7 +81,7 @@ const GamePage: React.FC = () => {
     }
 
     // 生成一组障碍物（每次至少2个，且只有1个正确，初始y更高）
-    const generateObstacles = () => {
+    const generateObstacles = (currentObstacles: any[]) => {
         if (!categoryData || !item) return []
         const allItems = categoryData.items
         const optionCount = Math.max(2, Math.min(gameConfig.optionsCount, LANE_COUNT))
@@ -89,16 +89,15 @@ const GamePage: React.FC = () => {
         const shuffled = wrongs.sort(() => Math.random() - 0.5)
         const selected = shuffled.slice(0, optionCount - 1)
         const lanes = Array.from({ length: LANE_COUNT }, (_, i) => i).sort(() => Math.random() - 0.5)
-
-        // 找到当前所有障碍物的最小y
+    
+        // 用最新的障碍物数组计算最小y
         let minY = 0
-        if (obstacles.length > 0) {
-            minY = Math.min(...obstacles.map(o => o.y))
+        if (currentObstacles.length > 0) {
+            minY = Math.min(...currentObstacles.map(o => o.y))
         }
-        const emptyRows = 6 // 你想要的空行数
-        // 新障碍物组的y
+        const emptyRows = 6
         const baseY = minY - (emptyRows + 1) * OBSTACLE_SIZE
-
+    
         // 生成空行
         const emptyGroups = []
         for (let i = emptyRows; i >= 1; i--) {
@@ -112,7 +111,7 @@ const GamePage: React.FC = () => {
                 }))
             )
         }
-
+    
         // 生成一组障碍物
         const obs = Array(LANE_COUNT).fill(0).map((_, i) => ({
             key: '',
@@ -137,7 +136,7 @@ const GamePage: React.FC = () => {
                 color: getRandomColor()
             }
         })
-
+    
         return [...emptyGroups.flat(), ...obs]
     }
     // 主循环
@@ -145,13 +144,13 @@ const GamePage: React.FC = () => {
         if (!isPlaying) return
         // 障碍物生成
         obstacleTimer.current = setInterval(() => {
-            setObstacles(prev => [...prev, ...generateObstacles()])
+            setObstacles(prev => [...prev, ...generateObstacles(prev)])
         }, OBSTACLE_INTERVAL)
         // 障碍物下落
         gameTimer.current = setInterval(() => {
             setObstacles(prev =>
                 prev
-                    .map(o => ({ ...o, y: o.y + 8 }))
+                    .map(o => ({ ...o, y: o.y + obstacleSpeed }))
                     .filter(o => o.y < GAME_HEIGHT + OBSTACLE_SIZE)
             )
         }, 100)
@@ -262,13 +261,14 @@ const GamePage: React.FC = () => {
             saveStats(newCoins, newScore)
 
             // 2. 如果当前难度大于2，解锁下一个音节
-            if (nextLevel > 2) {
+            if (nextLevel > 2) { // 只在难度大于2时解锁
                 const categoryData = phoneticData.find(c => c.id === category)
                 if (categoryData) {
                     const idx = categoryData.items.findIndex(i => i.key === key)
                     if (idx !== -1 && idx + 1 < categoryData.items.length) {
                         const nextKey = categoryData.items[idx + 1].key
                         progress[`${category}_${nextKey}`] = true
+                        console.log('[handleGameOver] 解锁下一个音节:', nextKey)
                     }
                 }
             }
@@ -283,8 +283,8 @@ const GamePage: React.FC = () => {
                 Taro.navigateBack()
             }, 1500)
         } else {
-            let newScore = Math.max(0, score - 2)
-            saveStats(coins, newScore)
+            // let newScore = Math.max(0, score - 2)
+            // saveStats(coins, newScore)
             Taro.showToast({ title: '挑战失败', icon: 'error' })
             setTimeout(() => {
                 Taro.navigateBack()
