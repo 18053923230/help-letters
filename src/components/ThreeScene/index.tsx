@@ -1,5 +1,5 @@
 import { Canvas, View } from '@tarojs/components'
-import Taro, { createSelectorQuery, getStorageSync, setStorageSync, useDidShow } from '@tarojs/taro'
+import Taro, { createSelectorQuery, getStorageSync, setStorageSync, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { useEffect, useRef, useState } from 'react'
 import { phoneticData } from '../../config/phoneticData'
 import { difficultyLevels } from '../../config/gameConfig'
@@ -18,13 +18,23 @@ const HomePage: React.FC = () => {
 
     const [showHelp, setShowHelp] = useState(false)
 
+    useShareAppMessage(() => ({
+        title: '守护拼音小游戏，快来挑战！',
+        path: '/pages/index/index',
+        // imageUrl: '' // 可选：自定义分享图片
+    }))
+
+    useShareTimeline(() => ({
+        title: '守护拼音小游戏，快来挑战！'
+    }))
+
     // const audioPlayerRef = useRef<{ play: () => void }>(null)
 
     // 在 HomePage 组件顶部
     const [lastBonusTime, setLastBonusTime] = useState<number>(0)
 
     useEffect(() => {
-        Taro.showToast({ title: '帮助右上？', icon: 'success' })
+        Taro.showToast({ title: '帮助在右上', icon: 'success' })
 
         // 首次登录奖励
         const saved = Taro.getStorageSync('user_stats')
@@ -171,7 +181,9 @@ const HomePage: React.FC = () => {
         )
     }
     const getVisibleItems = (category) => {
-        const items = phoneticData.find(c => c.id === category)?.items || []
+        // const items = phoneticData.find(c => c.id === category)?.items || []
+        const found = phoneticData.find(c => c.id === category);
+        const items = found ? found.items : [];
 
         // 找到最后一个解锁的项目的索引
         const lastUnlockedIndex = items.reduce((maxIndex, item, index) => {
@@ -230,37 +242,54 @@ const HomePage: React.FC = () => {
     ]
 
     const audioPlayerRef = useRef<{ play: () => void }>(null)
-        // 在 HomePage 组件内
+    // 在 HomePage 组件内
     useEffect(() => {
-      if (selectedItem) {
-        // 只有选中且已解锁才播放
-        if (progress[`${activeCategory}_${selectedItem.key}`]) {
-          audioPlayerRef.current?.play()
+        if (selectedItem) {
+            // 只有选中且已解锁才播放
+            if (progress[`${activeCategory}_${selectedItem.key}`]) {
+                // audioPlayerRef.current?.play()
+                if (audioPlayerRef.current) {
+                    audioPlayerRef.current.play()
+                } else {
+                    console.warn('Audio player ref is not set')
+                }
+            }
         }
-      }
     }, [selectedItem])
 
 
-useDidShow(() => {
-    // 返回时刷新金币和积分
-    const saved = Taro.getStorageSync('user_stats')
-    console.log('[HomePage useDidShow] 读取 user_stats:', saved)
-    if (saved) {
-        const { coins = 0, score = 0 } = JSON.parse(saved)
-        setCoins(coins)
-        setScore(score)
-    }
-})
+    useDidShow(() => {
+        // 返回时刷新金币和积分
+        const saved = Taro.getStorageSync('user_stats')
+        console.log('[HomePage useDidShow] 读取 user_stats:', saved)
+        if (saved) {
+            const { coins = 0, score = 0 } = JSON.parse(saved)
+            setCoins(coins)
+            setScore(score)
+        }
+        // 刷新关卡解锁进度
+        const savedProgress = Taro.getStorageSync(STORAGE_KEY)
+        console.log('[HomePage useDidShow] 读取关卡进度:', savedProgress)
+        if (savedProgress) {
+            setProgress(typeof savedProgress === 'string' ? JSON.parse(savedProgress) : savedProgress)
+        }
+    })
 
-useEffect(() => {
-    const saved = Taro.getStorageSync('user_stats')
-    console.log('[HomePage useEffect] 读取 user_stats:', saved)
-    if (saved) {
-        const { coins = 0, score = 0 } = JSON.parse(saved)
-        setCoins(coins)
-        setScore(score)
-    }
-}, [])
+    useEffect(() => {
+        const saved = Taro.getStorageSync('user_stats')
+        console.log('[HomePage useEffect] 读取 user_stats:', saved)
+        if (saved) {
+            const { coins = 0, score = 0 } = JSON.parse(saved)
+            setCoins(coins)
+            setScore(score)
+        }
+        // 刷新关卡解锁进度
+        const savedProgress = Taro.getStorageSync(STORAGE_KEY)
+        console.log('[HomePage useEffect] 读取关卡进度:', savedProgress)
+        if (savedProgress) {
+            setProgress(typeof savedProgress === 'string' ? JSON.parse(savedProgress) : savedProgress)
+        }
+    }, [])
 
 
     return (
@@ -337,7 +366,8 @@ useEffect(() => {
                             return (
                                 <View
                                     key={item.key}
-                                    className={`item colorful-bg-${colorIdx} ${!progress[`${activeCategory}_${item.key}`] ? 'locked' : ''} ${selectedItem?.key === item.key ? 'selected' : ''}`}
+                                    className={`item colorful-bg-${colorIdx} ${!progress[`${activeCategory}_${item.key}`] ? 'locked' : ''} ${(selectedItem && selectedItem.key === item.key) ? 'selected' : ''}`}
+                                    // className={`item colorful-bg-${colorIdx} ${!progress[`${activeCategory}_${item.key}`] ? 'locked' : ''} ${selectedItem?.key === item.key ? 'selected' : ''}`}
                                     onClick={() => handleItemClick(item)}
                                 >
                                     <View className={`item-content colorful-${colorIdx}`}>
@@ -358,6 +388,20 @@ useEffect(() => {
                     onClick={handleStartGame}
                 >
                     开始学习
+                </View>
+
+                <View className="share-btn" openType="share" style={{
+                    position: 'absolute',
+                    top: 20,
+                    right: 20,
+                    background: '#faad14',
+                    color: '#fff',
+                    borderRadius: 20,
+                    padding: '8px 18px',
+                    fontWeight: 'bold',
+                    fontSize: 18
+                }}>
+                    分享
                 </View>
             </View>
         </View>

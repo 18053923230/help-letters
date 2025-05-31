@@ -6,7 +6,13 @@ export default defineAppConfig({
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#fff',
-    navigationBarTitleText: 'WeChat',
+    navigationBarTitleText: '拼音跑酷',
     navigationBarTextStyle: 'black'
-  }
+  }, 
+  "lazyCodeLoading": "requiredComponents",
+  // 开启分享
+  enableShareAppMessage: true,
+  enableShareTimeline: true
+   
+
 })

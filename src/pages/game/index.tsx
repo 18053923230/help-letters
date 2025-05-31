@@ -1,5 +1,5 @@
 import { View, Text } from '@tarojs/components'
-import Taro, { useDidShow, useRouter } from '@tarojs/taro'
+import Taro, { useDidShow, useRouter,useShareAppMessage ,useShareTimeline} from '@tarojs/taro'
 import { useEffect, useState, useRef } from 'react'
 import { phoneticData } from '../../config/phoneticData'
 import './index.scss'
@@ -7,7 +7,7 @@ import PhoneticAudioPlayer from '../../components/PhoneticAudioPlayer'
 import { difficultyLevels } from '../../config/gameConfig'
 
 const GAME_WIDTH = 375
-const GAME_HEIGHT = 600
+const GAME_HEIGHT = 700
 const RUNNER_SIZE = 60
 const OBSTACLE_SIZE = 54
 const LANE_COUNT = 3
@@ -36,6 +36,17 @@ const GamePage: React.FC = () => {
         item: item,
         audio: audio
     })
+
+    useShareAppMessage(() => ({
+        title: '守护拼音小游戏，快来挑战！',
+        path: '/pages/game/index',
+        // imageUrl: '' // 可选：自定义分享图片
+    }))
+
+    useShareTimeline(() => ({
+        title: '守护拼音小游戏，快来挑战！'
+    }))
+
 
 
     useEffect(() => {
@@ -486,23 +497,23 @@ const GamePage: React.FC = () => {
             {/* 左右按钮 */}
             <View className="control-bar" style={{
                 position: 'absolute',
-                bottom: 40,
+                bottom: 10,
                 left: 0,
                 width: '100%',
                 display: 'flex',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
                 pointerEvents: 'auto',
                 padding: '0 10px',
             }}>
                 <View className="ctrl-btn" onClick={handleLeft} style={{
                     width: 60, height: 60, borderRadius: 30, background: '#faad14',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 36, color: '#fff', fontWeight: 'bold', boxShadow: '0 2px 8px #faad14'
+                    fontSize: 36, color: '#fff', fontWeight: 'bold', boxShadow: '0 2px 8px #40e70d', marginRight: 20
                 }}>{'←'}</View>
                 <View className="ctrl-btn" onClick={handleRight} style={{
                     width: 60, height: 60, borderRadius: 30, background: '#faad14',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 36, color: '#fff', fontWeight: 'bold', boxShadow: '0 2px 8px #faad14', marginRight: 20
+                    fontSize: 36, color: '#fff', fontWeight: 'bold', boxShadow: '0 2px 8px #fa3a14', marginLeft: 20
                 }}>{'→'}</View>
             </View>
 
