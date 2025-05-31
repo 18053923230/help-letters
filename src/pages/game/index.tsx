@@ -1,19 +1,29 @@
 import { View, Text } from '@tarojs/components'
-import Taro, { useDidShow, useRouter,useShareAppMessage ,useShareTimeline} from '@tarojs/taro'
-import { useEffect, useState, useRef } from 'react'
+import Taro, { useDidShow, useRouter, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
+import { useEffect, useState, useRef, forwardRef } from 'react'
 import { phoneticData } from '../../config/phoneticData'
 import './index.scss'
 import PhoneticAudioPlayer from '../../components/PhoneticAudioPlayer'
 import { difficultyLevels } from '../../config/gameConfig'
+// import Taro from '@tarojs/taro'
 
-const GAME_WIDTH = 375
-const GAME_HEIGHT = 700
-const RUNNER_SIZE = 60
-const OBSTACLE_SIZE = 54
+const { windowWidth, windowHeight } = Taro.getSystemInfoSync()
+
+const DESIGN_WIDTH = 375
+const scale = windowWidth / DESIGN_WIDTH
+
+const GAME_WIDTH = windowWidth
+const GAME_HEIGHT = windowHeight
+const RUNNER_SIZE = 60 * scale
+const OBSTACLE_SIZE = 54 * scale
+// 其它尺寸同理
 const LANE_COUNT = 3
 const OBSTACLE_INTERVAL = 2000 // ms
 
 const STORAGE_KEY = 'user_stats'
+
+
+
 
 const GamePage: React.FC = () => {
     const audioPlayerRef = useRef<{ play: () => void }>(null)
@@ -37,15 +47,6 @@ const GamePage: React.FC = () => {
         audio: audio
     })
 
-    useShareAppMessage(() => ({
-        title: '守护拼音小游戏，快来挑战！',
-        path: '/pages/game/index',
-        // imageUrl: '' // 可选：自定义分享图片
-    }))
-
-    useShareTimeline(() => ({
-        title: '守护拼音小游戏，快来挑战！'
-    }))
 
 
 
@@ -55,7 +56,9 @@ const GamePage: React.FC = () => {
             audioContext.current.src = gameState.current.audio
         }
         return () => {
-            audioContext.current?.destroy()
+            if (audioContext.current) {
+                audioContext.current.destroy()
+            }
         }
     }, [gameState.current.audio])
 
@@ -208,7 +211,10 @@ const GamePage: React.FC = () => {
                         }
                         return newHealth
                     })
-                    audioPlayerRef.current?.play()
+                    // audioPlayerRef.current?.play()
+                    if (audioPlayerRef.current) {
+                        audioPlayerRef.current.play()
+                    }
                 } else {
                     setScore(s => Math.max(0, s - (gameConfig.wrongPenalty || 5)))
                     setHealth(h => {
@@ -308,7 +314,9 @@ const GamePage: React.FC = () => {
     const handleHealthClick = () => {
         setHealthAudioRepeat(3)
         setTimeout(() => {
-            audioPlayerRef.current?.play()
+            if (audioPlayerRef.current) {
+                audioPlayerRef.current.play()
+            }
         }, 0)
     }
     const handleAudioEnd = () => setHealthAudioRepeat(1)
@@ -387,6 +395,16 @@ const GamePage: React.FC = () => {
         }, 1000)
     }
 
+    useShareAppMessage(() => ({
+        title: '守护拼音小游戏，快来挑战！',
+        path: '/pages/game/index',
+        // imageUrl: '' // 可选：自定义分享图片
+    }))
+
+    useShareTimeline(() => ({
+        title: '守护拼音小游戏，快来挑战！'
+    }))
+
 
     return (
         <View className="game-page" style={{ width: GAME_WIDTH, height: GAME_HEIGHT, margin: '0 auto', background: '#e6f7ff', position: 'relative', overflow: 'hidden' }}>
@@ -404,7 +422,7 @@ const GamePage: React.FC = () => {
                 </View>
                 <View className="health-text">{Math.round(health)}%</View>
             </View>
-                        {/* <View className="score-bar" style={{
+            {/* <View className="score-bar" style={{
                 margin: '12px auto 0 auto',
                 fontSize: 26,
                 color: '#faad14',

@@ -1,6 +1,6 @@
 import { Canvas, View } from '@tarojs/components'
 import Taro, { createSelectorQuery, getStorageSync, setStorageSync, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react'
 import { phoneticData } from '../../config/phoneticData'
 import { difficultyLevels } from '../../config/gameConfig'
 import './index.scss'
@@ -8,9 +8,15 @@ import './index.scss'
 import PhoneticAudioPlayer from '../../components/PhoneticAudioPlayer'
 // import { useRef } from 'react'
 
+// import { useShareAppMessage } from '@tarojs/taro'
+// import Taro from '@tarojs/taro'
+import dayjs from 'dayjs' // 推荐用 dayjs 处理时间
+
 const STORAGE_KEY = 'phonetic_progress'
 
-const HomePage: React.FC = () => {
+
+
+const HomePage = forwardRef((props, ref) => {
     const [activeCategory, setActiveCategory] = useState('initials')
     const canvasRef = useRef<any>(null)
     const [progress, setProgress] = useState<{ [key: string]: boolean }>({})
@@ -18,15 +24,7 @@ const HomePage: React.FC = () => {
 
     const [showHelp, setShowHelp] = useState(false)
 
-    useShareAppMessage(() => ({
-        title: '守护拼音小游戏，快来挑战！',
-        path: '/pages/index/index',
-        // imageUrl: '' // 可选：自定义分享图片
-    }))
 
-    useShareTimeline(() => ({
-        title: '守护拼音小游戏，快来挑战！'
-    }))
 
     // const audioPlayerRef = useRef<{ play: () => void }>(null)
 
@@ -71,7 +69,7 @@ const HomePage: React.FC = () => {
             return
         }
         if (coins < 5) {
-            Taro.showToast({ title: '金币不足，无法进入关卡，请节约用钱，2小时后再试', icon: 'none' })
+            Taro.showToast({ title: '金币不足，2小时后自动赠送，或分享到群可得100学习章（暂未加）', icon: 'none' })
             return
         }
         const newCoins = coins - 5
@@ -107,24 +105,16 @@ const HomePage: React.FC = () => {
 
 
 
-    // const initProgress = () => {
-    //     try {
-    //         const savedProgress = getStorageSync(STORAGE_KEY)
-    //         if (savedProgress) {
-    //             console.log('Loading saved progress:', savedProgress)
-    //             setProgress(JSON.parse(savedProgress))
-    //         } else {
-    //             const initialProgress = {
-    //                 'initials_b': true
-    //             }
-    //             console.log('Creating initial progress:', initialProgress)
-    //             setStorageSync(STORAGE_KEY, JSON.stringify(initialProgress))
-    //             setProgress(initialProgress)
-    //         }
-    //     } catch (error) {
-    //         console.error('Failed to load progress:', error)
-    //     }
-    // }这是是解决第一个的方案。全部按顺序
+    // 暴露刷新金币方法给父组件
+    useImperativeHandle(ref, () => ({
+        refreshCoins: () => {
+            const saved = Taro.getStorageSync('user_stats')
+            if (saved) {
+                const { coins = 0 } = typeof saved === 'string' ? JSON.parse(saved) : saved
+                setCoins(coins)
+            }
+        }
+    }))
     const initProgress = () => {
         try {
             const savedProgress = getStorageSync(STORAGE_KEY)
@@ -223,7 +213,10 @@ const HomePage: React.FC = () => {
             return
         }
         setLastClick({ key: item.key, time: now })
-        if (!progress[`${activeCategory}_${item.key}`]) return
+        if (!progress[`${activeCategory}_${item.key}`]) {
+            setShowHelp(true) // 这里弹出帮助
+            return
+        }
         setSelectedItem(item)
         // audioPlayerRef.current?.play()
     }
@@ -234,6 +227,7 @@ const HomePage: React.FC = () => {
         '每两小时可获赠10学习章，每次学习要消耗5学习章。',
         '每次过关可获得关卡难度一致的学习章。',
         '每关卡共10级难度。',
+        '解锁关卡需要上一关卡达3级。',
         '可双击要学习的关卡进入，也可选中后点击开始。',
         '积分是指成功通关的关卡次数。',
         '进入关卡后，可看到当前难度的被保护的字母的血条，及任务时间，你需要在规定时间内将血条恢复到100分。',
@@ -292,8 +286,14 @@ const HomePage: React.FC = () => {
     }, [])
 
 
+
+
+
+
     return (
         <View className="home-page">
+
+
 
 
             <PhoneticAudioPlayer
@@ -321,8 +321,41 @@ const HomePage: React.FC = () => {
                             <View className="help-text">
                                 {helpLines.map(line => <View key={line}>{line}</View>)}
                             </View>
-
                             <View className="help-close" onClick={() => setShowHelp(false)}>知道啦</View>
+
+                            <View
+                                className="help-clear"
+                                style={{
+                                    margin: '16px auto 0 auto',
+                                    background: '#ff7875',
+                                    color: '#fff',
+                                    borderRadius: 12,
+                                    padding: '8px 20px',
+                                    fontWeight: 'bold',
+                                    fontSize: 16,
+                                    textAlign: 'center',
+                                    cursor: 'pointer'
+                                }}
+                                onClick={() => {
+                                    Taro.showModal({
+                                        title: '确认清理',
+                                        content: '确定要清理本地所有学习进度和金币数据吗？此操作不可恢复！',
+                                        success: function (res) {
+                                            if (res.confirm) {
+                                                Taro.clearStorageSync()
+                                                setCoins(0)
+                                                setScore(0)
+                                                setProgress({})
+                                                Taro.showToast({ title: '已清理', icon: 'success' })
+                                            }
+                                        }
+                                    })
+                                }}
+                            >
+                                清理本地数据
+                            </View>
+
+                            
                         </View>
                     </View>
                 )}
@@ -390,7 +423,7 @@ const HomePage: React.FC = () => {
                     开始学习
                 </View>
 
-                <View className="share-btn" openType="share" style={{
+                {/* <View className="share-btn" openType="share" style={{
                     position: 'absolute',
                     top: 20,
                     right: 20,
@@ -402,13 +435,13 @@ const HomePage: React.FC = () => {
                     fontSize: 18
                 }}>
                     分享
-                </View>
+                </View> */}
             </View>
         </View>
     )
 
 
-}
+})
 
 
 export default HomePage
