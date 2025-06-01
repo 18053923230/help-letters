@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 're
 import { phoneticData } from '../../config/phoneticData'
 import { difficultyLevels } from '../../config/gameConfig'
 import './index.scss'
+import bgMusic from '../../assets/audio/bg-music.mp3' // 请确保有此文件
+
 
 import PhoneticAudioPlayer from '../../components/PhoneticAudioPlayer'
 // import { useRef } from 'react'
@@ -23,6 +25,29 @@ const HomePage = forwardRef((props, ref) => {
     const [selectedItem, setSelectedItem] = useState<PhoneticItem | null>(null)
 
     const [showHelp, setShowHelp] = useState(false)
+
+    // 背景音乐
+    const bgAudioRef = useRef<any>(null)
+
+    useEffect(() => {
+        // 创建背景音乐实例
+        const audio = Taro.createInnerAudioContext()
+        audio.src = bgMusic
+        audio.loop = true
+        audio.volume = 0.15 // 设置音量为15%
+        audio.autoplay = true
+        audio.play()
+        bgAudioRef.current = audio
+
+        return () => {
+            // 卸载时停止音乐
+            if (bgAudioRef.current) {
+                bgAudioRef.current.stop()
+                bgAudioRef.current.destroy()
+                bgAudioRef.current = null
+            }
+        }
+    }, [])
 
 
 

@@ -33,6 +33,7 @@ const GamePage: React.FC = () => {
     const level = Number(router.params.level) || 1
     const gameConfig = difficultyLevels[level - 1]
 
+    const [scoreAnims, setScoreAnims] = useState<any[]>([]) // ← 添加这一行
     const categoryData = phoneticData.find(c => c.id === category)
     const item = categoryData && categoryData.items.find(i => i.key === key)
     const audio = item && item.audio
@@ -46,6 +47,18 @@ const GamePage: React.FC = () => {
         item: item,
         audio: audio
     })
+
+
+
+    useEffect(() => {
+        if (scoreAnims.length === 0) return
+        const timers = scoreAnims.map(anim =>
+            setTimeout(() => {
+                setScoreAnims(anims => anims.filter(a => a.key !== anim.key))
+            }, 800)
+        )
+        return () => timers.forEach(t => clearTimeout(t))
+    }, [scoreAnims])
 
 
 
@@ -196,7 +209,12 @@ const GamePage: React.FC = () => {
                 o.y < GAME_HEIGHT - RUNNER_SIZE * 4.2 + RUNNER_SIZE
             ) {
                 // 碰撞
+                // 计算动画出现的位置
+                const animX = o.lane * laneWidth + laneWidth / 2 - 20
+                const animY = o.y
                 if (o.type === 'right') {
+
+
                     setScore(s => {
                         const newScore = s + gameConfig.correctBonus
                         if (newScore >= 100) {
@@ -214,9 +232,14 @@ const GamePage: React.FC = () => {
                     // audioPlayerRef.current?.play()
                     if (audioPlayerRef.current) {
                         audioPlayerRef.current.play()
+                        // 正确答案
+                        setScoreAnims(anims => [
+                            ...anims,
+                            { key: Date.now() + Math.random(), x: animX, y: animY, value: '+10', color: '#52c41a' }
+                        ])
                     }
                 } else {
-                    setScore(s => Math.max(0, s - (gameConfig.wrongPenalty || 5)))
+                    setScore(s => Math.max(0, s - (gameConfig.wrongPenalty || 1)))
                     setHealth(h => {
                         const newHealth = Math.max(0, h - gameConfig.healthDecay)
                         console.log('Health updated:', newHealth)
@@ -224,6 +247,12 @@ const GamePage: React.FC = () => {
                         return newHealth
                     })
                     playWrongAudio()
+                    // 错误答案
+                    setScoreAnims(anims => [
+                        ...anims,
+                        { key: Date.now() + Math.random(), x: animX, y: animY, value: `-${gameConfig.wrongPenalty || 1}`, color: '#ff4d4f' }
+                    ])
+
                 }
                 setObstacles(prev => prev.filter(x => x !== o))
             }
@@ -488,14 +517,34 @@ const GamePage: React.FC = () => {
                         {o.key}
                     </View>
                 ))}
+                {/* 动态分数字样动画，放在跑道层级 */}
+                {scoreAnims.map(anim => (
+                    <View
+                        key={anim.key}
+                        style={{
+                            position: 'absolute',
+                            left: anim.x,
+                            top: anim.y,
+                            color: anim.color,
+                            fontWeight: 'bold',
+                            fontSize: 32,
+                            pointerEvents: 'none',
+                            transition: 'top 0.8s cubic-bezier(.4,2,.6,1), opacity 0.8s',
+                            opacity: 0.9,
+                            zIndex: 99
+                        }}
+                        className="score-float-anim"
+                    >
+                        {anim.value}
+                    </View>
+                ))}
                 {/* 主角 */}
                 <View
                     className="runner"
                     style={{
                         position: 'absolute',
                         left: runnerLane * laneWidth + laneWidth / 2 - RUNNER_SIZE / 2,
-                        // top: GAME_HEIGHT - RUNNER_SIZE * 1.8, // 原来
-                        top: GAME_HEIGHT - RUNNER_SIZE * 4.2,    // 上移到按钮上方
+                        top: GAME_HEIGHT - RUNNER_SIZE * 4.2,
                         width: RUNNER_SIZE,
                         height: RUNNER_SIZE,
                         borderRadius: RUNNER_SIZE / 2,

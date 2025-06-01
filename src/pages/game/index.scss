@@ -196,3 +196,16 @@
   color: #faad14;
   font-weight: bold;
 }
+
+
+.score-float-anim {
+  will-change: top, opacity;
+  /* 动画由JS控制top变化，或用transform: translateY(-40px) */
+  animation: floatUp 4s forwards;
+}
+@keyframes floatUp {
+  to {
+    top: -40px;
+    opacity: 0;
+  }
+}
