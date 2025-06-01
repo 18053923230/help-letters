@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 're
 import { phoneticData } from '../../config/phoneticData'
 import { difficultyLevels } from '../../config/gameConfig'
 import './index.scss'
-import bgMusic from '../../assets/audio/bg-music.mp3' // 请确保有此文件
+// import bgMusic from '../../assets/audio/bg-music.mp3' // 请确保有此文件
 
 
 import PhoneticAudioPlayer from '../../components/PhoneticAudioPlayer'
@@ -16,6 +16,10 @@ import dayjs from 'dayjs' // 推荐用 dayjs 处理时间
 
 const STORAGE_KEY = 'phonetic_progress'
 
+
+const BG_MUSIC_URL = 'https://100fei.oss-cn-hangzhou.aliyuncs.com/bg-music.mp3'
+const BG_MUSIC_CACHE_KEY = 'bg_music_cache'
+const BG_MUSIC_CACHE_TIME = 60 * 60 * 1000 *365// 1小时
 
 
 const HomePage = forwardRef((props, ref) => {
@@ -30,17 +34,42 @@ const HomePage = forwardRef((props, ref) => {
     const bgAudioRef = useRef<any>(null)
 
     useEffect(() => {
-        // 创建背景音乐实例
-        const audio = Taro.createInnerAudioContext()
-        audio.src = bgMusic
-        audio.loop = true
-        audio.volume = 0.15 // 设置音量为15%
-        audio.autoplay = true
-        audio.play()
-        bgAudioRef.current = audio
+        let isUnmounted = false
+
+        async function playBgMusic() {
+            // 检查本地缓存
+            const cache = Taro.getStorageSync(BG_MUSIC_CACHE_KEY)
+            let src = BG_MUSIC_URL
+            const now = Date.now()
+            if (cache && cache.path && cache.time && now - cache.time < BG_MUSIC_CACHE_TIME) {
+                src = cache.path
+            } else {
+                // 下载并缓存
+                try {
+                    const res = await Taro.downloadFile({ url: BG_MUSIC_URL })
+                    if (res.tempFilePath) {
+                        src = res.tempFilePath
+                        Taro.setStorageSync(BG_MUSIC_CACHE_KEY, { path: src, time: now })
+                    }
+                } catch (e) {
+                    // 下载失败，回退用网络地址
+                    src = BG_MUSIC_URL
+                }
+            }
+            if (isUnmounted) return
+            const audio = Taro.createInnerAudioContext()
+            audio.src = src
+            audio.loop = true
+            audio.volume = 0.15
+            audio.autoplay = true
+            audio.play()
+            bgAudioRef.current = audio
+        }
+
+        playBgMusic()
 
         return () => {
-            // 卸载时停止音乐
+            isUnmounted = true
             if (bgAudioRef.current) {
                 bgAudioRef.current.stop()
                 bgAudioRef.current.destroy()
@@ -48,6 +77,7 @@ const HomePage = forwardRef((props, ref) => {
             }
         }
     }, [])
+
 
 
 
