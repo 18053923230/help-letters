@@ -10,7 +10,7 @@ export default defineAppConfig({
     navigationBarTextStyle: 'black'
   }, 
   "lazyCodeLoading": "requiredComponents",
-  // 开启分享
+
   enableShareAppMessage: true,
   enableShareTimeline: true
    

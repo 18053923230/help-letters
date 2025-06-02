@@ -427,7 +427,7 @@ const GamePage: React.FC = () => {
     useShareAppMessage(() => ({
         title: '守护拼音小游戏，快来挑战！',
         path: '/pages/game/index',
-        // imageUrl: '' // 可选：自定义分享图片
+        imageUrl: '' 
     }))
 
     useShareTimeline(() => ({
