@@ -19,7 +19,7 @@ const STORAGE_KEY = 'phonetic_progress'
 
 const BG_MUSIC_URL = 'https://100fei.oss-cn-hangzhou.aliyuncs.com/bg-music.mp3'
 const BG_MUSIC_CACHE_KEY = 'bg_music_cache'
-const BG_MUSIC_CACHE_TIME = 60 * 60 * 1000 *365// 1小时
+const BG_MUSIC_CACHE_TIME = 60 * 60 * 1000 * 365// 1小时
 
 
 const HomePage = forwardRef((props, ref) => {
@@ -307,7 +307,7 @@ const HomePage = forwardRef((props, ref) => {
     }, [selectedItem])
 
 
-    useDidShow(() => {
+        useDidShow(() => {
         // 返回时刷新金币和积分
         const saved = Taro.getStorageSync('user_stats')
         console.log('[HomePage useDidShow] 读取 user_stats:', saved)
@@ -339,6 +339,20 @@ const HomePage = forwardRef((props, ref) => {
             setProgress(typeof savedProgress === 'string' ? JSON.parse(savedProgress) : savedProgress)
         }
     }, [])
+
+    
+
+
+    useShareAppMessage(() => ({
+        title: '守护拼音小游戏，快来挑战！',
+        path: '/pages/game/index',
+        imageUrl: ''
+    }))
+
+    useShareTimeline(() => ({
+        title: '守护拼音小游戏，快来挑战！'
+    }))
+
 
 
 
@@ -410,7 +424,7 @@ const HomePage = forwardRef((props, ref) => {
                                 清理本地数据
                             </View>
 
-                            
+
                         </View>
                     </View>
                 )}

@@ -1,7 +1,8 @@
 export default defineAppConfig({
   pages: [
     'pages/index/index',
-    'pages/game/index'
+    'pages/game/index',
+    // 'components/ThreeScene/index',
   ],
   window: {
     backgroundTextStyle: 'light',
@@ -10,9 +11,9 @@ export default defineAppConfig({
     navigationBarTextStyle: 'black'
   }, 
   "lazyCodeLoading": "requiredComponents",
-
   enableShareAppMessage: true,
-  enableShareTimeline: true
+  enableShareTimeline: true,
+  
    
 
 })
